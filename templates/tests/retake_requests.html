@@ -1,0 +1,374 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Qayta Ishlash So'rovlari - Buxoro Bilimdonlar Maktabi{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Header -->
+        <div class="glass-card p-4 mb-4" data-aos="fade-down">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="text-white mb-1">
+                        <i class="fas fa-redo me-2"></i>
+                        Qayta Ishlash So'rovlari
+                    </h2>
+                    <p class="text-white-50 mb-0">O'quvchilarning qayta ishlash so'rovlarini ko'rib chiqing</p>
+                </div>
+                <div>
+                    <span class="badge bg-info fs-6" id="totalRequests">0 so'rov</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="glass-card p-3 mb-4" data-aos="fade-in">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <select class="form-select bg-dark text-white border-secondary" id="statusFilter">
+                        <option value="all">Barcha so'rovlar</option>
+                        <option value="pending">Kutilmoqda</option>
+                        <option value="approved">Tasdiqlangan</option>
+                        <option value="rejected">Rad etilgan</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" class="form-control bg-dark text-white border-secondary" 
+                           id="searchInput" placeholder="O'quvchi ismini qidirish...">
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-outline-light" onclick="refreshRequests()">
+                        <i class="fas fa-sync-alt me-1"></i>
+                        Yangilash
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Requests Table -->
+        <div class="glass-card p-4" data-aos="fade-up">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>O'quvchi</th>
+                            <th>Test</th>
+                            <th>Oldingi Natija</th>
+                            <th>Sabab</th>
+                            <th>Holat</th>
+                            <th>Sana</th>
+                            <th class="text-center">Amal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requestsTableBody">
+                        <tr id="loadingRow">
+                            <td colspan="7" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Yuklanmoqda...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Request Detail Modal -->
+<div class="modal fade" id="requestModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-redo me-2"></i>
+                    Qayta Ishlash So'rovi
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="requestDetails"></div>
+                
+                <!-- Admin Response Form -->
+                <div id="adminResponseForm" class="mt-4" style="display: none;">
+                    <div class="mb-3">
+                        <label class="form-label text-white">Admin Javobi</label>
+                        <textarea class="form-control bg-dark text-white border-secondary" 
+                                  id="adminResponse" rows="3" placeholder="Admin javobini kiriting..."></textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-success" onclick="handleRequest('approve')">
+                            <i class="fas fa-check me-1"></i>
+                            Tasdiqlash
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="handleRequest('reject')">
+                            <i class="fas fa-times me-1"></i>
+                            Rad Etish
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Bekor qilish
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentRequests = [];
+let currentRequestId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadRetakeRequests();
+    
+    // Event listeners
+    document.getElementById('statusFilter').addEventListener('change', filterRequests);
+    document.getElementById('searchInput').addEventListener('input', filterRequests);
+});
+
+async function loadRetakeRequests() {
+    try {
+        showLoading(true);
+        const response = await fetch('{% url "tests:retake_requests" %}', {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            currentRequests = data.requests;
+            updateTotalCount(data.total_count);
+            displayRequests(currentRequests);
+        } else {
+            showError('Ma\'lumotlarni yuklashda xatolik');
+        }
+    } catch (error) {
+        console.error('Error loading retake requests:', error);
+        showError('Server bilan bog\'lanishda xatolik');
+    } finally {
+        showLoading(false);
+    }
+}
+
+function displayRequests(requests) {
+    const tbody = document.getElementById('requestsTableBody');
+    
+    if (requests.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-4 text-white-50">
+                    <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                    Hech qanday so'rov topilmadi
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = requests.map(request => `
+        <tr>
+            <td>
+                <div>
+                    <strong class="text-white">${request.student_name}</strong><br>
+                    <small class="text-white-50">${request.student_grade}-sinf ${request.student_class || ''}</small>
+                </div>
+            </td>
+            <td>
+                <div>
+                    <strong class="text-white">${request.test_title}</strong><br>
+                    <small class="text-white-50">${request.test_subject}</small>
+                </div>
+            </td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-${request.previous_percentage >= 80 ? 'success' : request.previous_percentage >= 60 ? 'warning' : 'danger'} me-2">
+                        ${request.previous_percentage.toFixed(1)}%
+                    </span>
+                    <small class="text-white-50">${request.previous_score} ball</small>
+                </div>
+            </td>
+            <td>
+                <span class="text-white" title="${request.reason}">
+                    ${request.reason.length > 50 ? request.reason.substring(0, 50) + '...' : request.reason}
+                </span>
+            </td>
+            <td>
+                <span class="badge bg-${getStatusColor(request.status)}">
+                    ${request.status_display}
+                </span>
+            </td>
+            <td>
+                <small class="text-white-50">
+                    ${new Date(request.created_at).toLocaleDateString('uz-UZ', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })}
+                </small>
+            </td>
+            <td class="text-center">
+                <button class="btn btn-outline-primary btn-sm" onclick="showRequestDetails(${request.id})">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function getStatusColor(status) {
+    switch(status) {
+        case 'pending': return 'warning';
+        case 'approved': return 'success';
+        case 'rejected': return 'danger';
+        default: return 'secondary';
+    }
+}
+
+function showRequestDetails(requestId) {
+    const request = currentRequests.find(r => r.id === requestId);
+    if (!request) return;
+    
+    currentRequestId = requestId;
+    
+    const detailsHtml = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-white">O'quvchi Ma'lumotlari</h6>
+                <p class="mb-1"><strong>Ism-familiya:</strong> <span class="text-white-50">${request.student_name}</span></p>
+                <p class="mb-1"><strong>Sinf:</strong> <span class="text-white-50">${request.student_grade}-sinf ${request.student_class || ''}</span></p>
+                <p class="mb-3"><strong>Username:</strong> <span class="text-white-50">${request.student_username}</span></p>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-white">Test Ma'lumotlari</h6>
+                <p class="mb-1"><strong>Test:</strong> <span class="text-white-50">${request.test_title}</span></p>
+                <p class="mb-1"><strong>Fan:</strong> <span class="text-white-50">${request.test_subject}</span></p>
+                <p class="mb-3"><strong>Oldingi natija:</strong> 
+                    <span class="badge bg-${request.previous_percentage >= 80 ? 'success' : request.previous_percentage >= 60 ? 'warning' : 'danger'}">
+                        ${request.previous_score} ball (${request.previous_percentage.toFixed(1)}%)
+                    </span>
+                </p>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <h6 class="text-white">Qayta Ishlash Sababi</h6>
+            <p class="text-white-50 border rounded p-2">${request.reason}</p>
+        </div>
+        
+        <div class="mb-3">
+            <h6 class="text-white">So'rov Holati</h6>
+            <span class="badge bg-${getStatusColor(request.status)} fs-6">${request.status_display}</span>
+            <small class="text-white-50 ms-2">
+                ${new Date(request.created_at).toLocaleDateString('uz-UZ', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })}
+            </small>
+        </div>
+        
+        ${request.admin_response ? `
+            <div class="mb-3">
+                <h6 class="text-white">Admin Javobi</h6>
+                <p class="text-white-50 border rounded p-2">${request.admin_response}</p>
+                <small class="text-white-50">Ko'rib chiqdi: ${request.approved_by}</small>
+            </div>
+        ` : ''}
+    `;
+    
+    document.getElementById('requestDetails').innerHTML = detailsHtml;
+    document.getElementById('adminResponseForm').style.display = request.status === 'pending' ? 'block' : 'none';
+    
+    new bootstrap.Modal(document.getElementById('requestModal')).show();
+}
+
+async function handleRequest(action) {
+    if (!currentRequestId) return;
+    
+    const adminResponse = document.getElementById('adminResponse').value.trim();
+    
+    try {
+        const response = await fetch(`/tests/retake-requests/${currentRequestId}/handle/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                action: action,
+                admin_response: adminResponse
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showSuccess(data.message);
+            bootstrap.Modal.getInstance(document.getElementById('requestModal')).hide();
+            loadRetakeRequests(); // Refresh the list
+        } else {
+            showError(data.error || 'Xatolik yuz berdi');
+        }
+    } catch (error) {
+        console.error('Error handling request:', error);
+        showError('Server bilan bog\'lanishda xatolik');
+    }
+}
+
+function filterRequests() {
+    const status = document.getElementById('statusFilter').value;
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    
+    let filtered = currentRequests;
+    
+    if (status !== 'all') {
+        filtered = filtered.filter(req => req.status === status);
+    }
+    
+    if (search) {
+        filtered = filtered.filter(req => 
+            req.student_name.toLowerCase().includes(search) ||
+            req.test_title.toLowerCase().includes(search) ||
+            req.test_subject.toLowerCase().includes(search)
+        );
+    }
+    
+    displayRequests(filtered);
+    updateTotalCount(filtered.length);
+}
+
+function refreshRequests() {
+    loadRetakeRequests();
+}
+
+function updateTotalCount(count) {
+    document.getElementById('totalRequests').textContent = `${count} so'rov`;
+}
+
+function showLoading(show) {
+    const loadingRow = document.getElementById('loadingRow');
+    if (loadingRow) {
+        loadingRow.style.display = show ? '' : 'none';
+    }
+}
+
+function showSuccess(message) {
+    // Simple success notification
+    alert(message);
+}
+
+function showError(message) {
+    // Simple error notification  
+    alert('Xatolik: ' + message);
+}
+</script>
+{% endblock %}

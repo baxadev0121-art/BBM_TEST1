@@ -1,0 +1,499 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Buxoro Bilimdonlar Maktabi{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Welcome Section -->
+        <div class="glass-card p-4 mb-4" data-aos="fade-down">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="text-white mb-1">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        Xush kelibsiz, {{ user.get_full_name|default:user.username }}!
+                    </h2>
+                    <p class="text-white-50 mb-0">{{ user.get_role_display }} paneli</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <span class="badge bg-{% if user.is_verified %}success{% else %}warning{% endif %} fs-6">
+                        <i class="fas fa-{% if user.is_verified %}check-circle{% else %}clock{% endif %} me-1"></i>
+                        {% if user.is_verified %}Tasdiqlangan{% else %}Kutilmoqda{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {% if not user.is_verified %}
+        <!-- Verification Warning -->
+        <div class="alert alert-warning" data-aos="fade-in">
+            <div class="d-flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle fa-2x"></i>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h5 class="alert-heading">Hisobingiz hali tasdiqlanmagan!</h5>
+                    <p class="mb-0">
+                        Testlarga kirish uchun admin tomonidan hisobingiz tasdiqlanishini kuting. 
+                        Bu jarayon odatda 24 soat ichida tugaydi.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quick Stats -->
+        <div class="row g-4 mb-4">
+            {% if user.role == 'student' %}
+            <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                <div class="glass-card p-4 h-100 text-center">
+                    <div class="text-primary mb-3">
+                        <i class="fas fa-tasks fa-2x"></i>
+                    </div>
+                    <h4 class="text-white" id="availableTests">--</h4>
+                    <p class="text-white-50 mb-0">Mavjud Testlar</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                <div class="glass-card p-4 h-100 text-center">
+                    <div class="text-success mb-3">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                    <h4 class="text-white" id="completedTests">--</h4>
+                    <p class="text-white-50 mb-0">Yakunlangan Testlar</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                <div class="glass-card p-4 h-100 text-center">
+                    <div class="text-warning mb-3">
+                        <i class="fas fa-percentage fa-2x"></i>
+                    </div>
+                    <h4 class="text-white" id="averageScore">--%</h4>
+                    <p class="text-white-50 mb-0">O'rtacha Ball</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                <div class="glass-card p-4 h-100 text-center">
+                    <div class="text-info mb-3">
+                        <i class="fas fa-medal fa-2x"></i>
+                    </div>
+                    <h4 class="text-white" id="bestScore">--%</h4>
+                    <p class="text-white-50 mb-0">Eng Yaxshi Natija</p>
+                </div>
+            </div>
+            
+            {% elif user.role == 'teacher' %}
+            <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                <div class="glass-card p-4 h-100 text-center">
+                    <div class="text-primary mb-3">
+                        <i class="fas fa-file-alt fa-2x"></i>
+                    </div>
+                    <h4 class="text-white" id="createdTests">--</h4>
+                    <p class="text-white-50 mb-0">Yaratilgan Testlar</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                <div class="glass-card p-4 h-100 text-center">
+                    <div class="text-success mb-3">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                    <h4 class="text-white" id="totalAttempts">--</h4>
+                    <p class="text-white-50 mb-0">Jami Urinishlar</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                <div class="glass-card p-4 h-100 text-center">
+                    <div class="text-warning mb-3">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                    <h4 class="text-white" id="avgStudentScore">--%</h4>
+                    <p class="text-white-50 mb-0">O'quvchilar O'rtachasi</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                <div class="glass-card p-4 h-100 text-center">
+                    <div class="text-info mb-3">
+                        <i class="fas fa-question-circle fa-2x"></i>
+                    </div>
+                    <h4 class="text-white" id="totalQuestions">--</h4>
+                    <p class="text-white-50 mb-0">Jami Savollar</p>
+                </div>
+            </div>
+            
+            {% elif user.role == 'admin' %}
+            <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                <div class="glass-card p-4 h-100 text-center">
+                    <div class="text-primary mb-3">
+                        <i class="fas fa-user-graduate fa-2x"></i>
+                    </div>
+                    <h4 class="text-white" id="totalStudents">--</h4>
+                    <p class="text-white-50 mb-0">Jami O'quvchilar</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                <div class="glass-card p-4 h-100 text-center">
+                    <div class="text-success mb-3">
+                        <i class="fas fa-chalkboard-teacher fa-2x"></i>
+                    </div>
+                    <h4 class="text-white" id="totalTeachers">--</h4>
+                    <p class="text-white-50 mb-0">Jami O'qituvchilar</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                <div class="glass-card p-4 h-100 text-center">
+                    <div class="text-warning mb-3">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                    <h4 class="text-white">{{ verification_requests_count }}</h4>
+                    <p class="text-white-50 mb-0">Tasdiq Kutilmoqda</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                <div class="glass-card p-4 h-100 text-center">
+                    <div class="text-info mb-3">
+                        <i class="fas fa-file-alt fa-2x"></i>
+                    </div>
+                    <h4 class="text-white" id="totalTests">--</h4>
+                    <p class="text-white-50 mb-0">Jami Testlar</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="glass-card p-4" data-aos="fade-right">
+                    <h4 class="text-white mb-4">
+                        <i class="fas fa-bolt me-2"></i>
+                        Tez Harakatlar
+                    </h4>
+                    
+                    <div class="row g-3">
+                        {% if user.role == 'student' %}
+                        <div class="col-md-6">
+                            <a href="{% url 'tests:test_list' %}" class="btn btn-primary w-100 btn-lg">
+                                <i class="fas fa-play me-2"></i>
+                                Testlarni Ko'rish
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{% url 'accounts:profile' %}" class="btn btn-outline-light w-100 btn-lg">
+                                <i class="fas fa-user-edit me-2"></i>
+                                Profilni Tahrirlash
+                            </a>
+                        </div>
+                        
+                        {% elif user.role == 'teacher' %}
+                        <div class="col-md-4">
+                            <a href="{% url 'tests:create_test' %}" class="btn btn-primary w-100 btn-lg">
+                                <i class="fas fa-plus me-2"></i>
+                                Yangi Test Yaratish
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="{% url 'tests:test_list' %}" class="btn btn-outline-light w-100 btn-lg">
+                                <i class="fas fa-list me-2"></i>
+                                Testlarni Boshqarish
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="{% url 'tests:all_results' %}" class="btn btn-outline-success w-100 btn-lg">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Natijalar
+                            </a>
+                        </div>
+                        
+                        {% elif user.role == 'admin' %}
+                        <div class="col-md-3">
+                            <a href="{% url 'accounts:verification_requests' %}" class="btn btn-primary w-100 btn-lg">
+                                <i class="fas fa-user-check me-2"></i>
+                                Foydalanuvchilarni Tasdiqlash
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'tests:all_results' %}" class="btn btn-outline-success w-100 btn-lg">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Barcha Natijalar
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/admin/" class="btn btn-outline-light w-100 btn-lg">
+                                <i class="fas fa-cog me-2"></i>
+                                Admin Panel
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'tests:test_list' %}" class="btn btn-outline-info w-100 btn-lg">
+                                <i class="fas fa-tasks me-2"></i>
+                                Testlar
+                            </a>
+                        </div>
+                            <a href="{% url 'tests:test_list' %}" class="btn btn-outline-light w-100 btn-lg">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Barcha Testlar
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="glass-card p-4" data-aos="fade-left">
+                    <h4 class="text-white mb-4">
+                        <i class="fas fa-user-circle me-2"></i>
+                        Profil Ma'lumoti
+                    </h4>
+                    
+                    <div class="text-center mb-3">
+                        <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 80px; height: 80px;">
+                            <i class="fas fa-user fa-2x text-white"></i>
+                        </div>
+                        <h5 class="text-white mb-1">{{ user.get_full_name|default:user.username }}</h5>
+                        <span class="badge bg-secondary">{{ user.get_role_display }}</span>
+                    </div>
+                    
+                    <ul class="list-unstyled text-white-50">
+                        <li class="mb-2">
+                            <i class="fas fa-envelope me-2"></i>
+                            {{ user.email }}
+                        </li>
+                        {% if user.role == 'student' %}
+                        <li class="mb-2">
+                            <i class="fas fa-graduation-cap me-2"></i>
+                            {{ user.grade }}-sinf {% if user.class_name %}({{ user.class_name }}){% endif %}
+                        </li>
+                        {% if user.student_id %}
+                        <li class="mb-2">
+                            <i class="fas fa-id-card me-2"></i>
+                            ID: {{ user.student_id }}
+                        </li>
+                        {% endif %}
+                        {% elif user.role == 'teacher' %}
+                        <li class="mb-2">
+                            <i class="fas fa-book me-2"></i>
+                            {{ user.subject|default:'Fan belgilanmagan' }}
+                        </li>
+                        {% endif %}
+                        {% if user.phone_number %}
+                        <li class="mb-2">
+                            <i class="fas fa-phone me-2"></i>
+                            {{ user.phone_number }}
+                        </li>
+                        {% endif %}
+                    </ul>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{% url 'accounts:profile' %}" class="btn btn-outline-light">
+                            <i class="fas fa-edit me-1"></i>
+                            Tahrirlash
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if user.role == 'student' and recent_results %}
+    <!-- So'nggi Natijalar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="glass-card p-4" data-aos="fade-up">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="text-white mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        So'nggi Natijalarim
+                    </h4>
+                    <a href="{% url 'tests:test_list' %}" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-eye me-1"></i>
+                        Barchasini ko'rish
+                    </a>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>Test Nomi</th>
+                                <th class="text-center">Ball</th>
+                                <th class="text-center">Foiz</th>
+                                <th class="text-center">Baho</th>
+                                <th class="text-center">Sana</th>
+                                <th class="text-center">Amal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in recent_results %}
+                            <tr>
+                                <td>
+                                    <i class="fas fa-file-alt me-2 text-primary"></i>
+                                    {{ result.test_name }}
+                                </td>
+                                <td class="text-center">
+                                    <strong>{{ result.score }}/{{ result.max_score }}</strong>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-{% if result.percentage >= 80 %}success{% elif result.percentage >= 60 %}warning{% elif result.percentage >= 30 %}info{% else %}danger{% endif %}">
+                                        {{ result.percentage|floatformat:1 }}%
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-{% if result.grade == 'A\'lo' %}success{% elif result.grade == 'Yaxshi' %}warning{% elif result.grade == 'Qoniqarli' %}info{% else %}danger{% endif %}">
+                                        {{ result.grade }}
+                                    </span>
+                                </td>
+                                <td class="text-center text-white-50">
+                                    {{ result.created_at|date:"d.m.Y H:i" }}
+                                </td>
+                                <td class="text-center">
+                                    <a href="{% url 'tests:test_results' result.test_id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% if best_result %}
+                <div class="mt-4">
+                    <div class="alert alert-success bg-gradient" role="alert">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-trophy fa-2x text-warning"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h5 class="alert-heading text-dark">Eng Yaxshi Natijangiz!</h5>
+                                <p class="mb-0 text-dark">
+                                    <strong>{{ best_result.test_name }}</strong> testida {{ best_result.score }}/{{ best_result.max_score }} ball 
+                                    ({{ best_result.percentage|floatformat:1 }}%) - <strong>{{ best_result.grade }}</strong>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% elif user.role == 'student' and total_tests == 0 %}
+    <!-- Natija yo'q holati -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="glass-card p-4 text-center" data-aos="fade-up">
+                <div class="text-info mb-3">
+                    <i class="fas fa-info-circle fa-3x"></i>
+                </div>
+                <h4 class="text-white mb-3">Hali test topshirmadingiz</h4>
+                <p class="text-white-50 mb-4">
+                    Bilimingizni sinash uchun mavjud testlardan birini tanlang va topshiring.
+                </p>
+                <a href="{% url 'tests:test_list' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-play me-2"></i>
+                    Testni Boshlash
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load dashboard statistics based on user role
+        loadDashboardStats();
+    });
+
+    async function loadDashboardStats() {
+        if (!{{ user.is_verified|yesno:"true,false" }}) {
+            return; // Don't load stats for unverified users
+        }
+
+        try {
+            {% if user.role == 'student' %}
+            // O'quvchi statistikalari
+            const totalTests = {{ total_tests|default:0 }};
+            const averageScore = {{ average_score|default:0|floatformat:1 }};
+            
+            {% if best_result %}
+            const bestScore = {{ best_result.percentage|default:0|floatformat:1 }};
+            {% else %}
+            const bestScore = 0;
+            {% endif %}
+            
+            // Mavjud testlarni olish
+            const response = await fetch('{% url "tests:test_list" %}');
+            if (response.ok) {
+                const data = await response.json();
+                let availableTests = 0;
+                
+                data.tests.forEach(test => {
+                    if (test.can_attempt) {
+                        availableTests++;
+                    }
+                });
+                
+                document.getElementById('availableTests').textContent = availableTests;
+            }
+            
+            document.getElementById('completedTests').textContent = totalTests;
+            document.getElementById('averageScore').textContent = averageScore + '%';
+            document.getElementById('bestScore').textContent = bestScore + '%';
+            
+            {% elif user.role == 'teacher' %}
+            // Load teacher stats
+            const response = await fetch('{% url "tests:test_list" %}');
+            if (response.ok) {
+                const data = await response.json();
+                
+                let totalAttempts = 0;
+                let totalQuestions = 0;
+                
+                data.tests.forEach(test => {
+                    totalAttempts += test.attempts_count || 0;
+                    totalQuestions += test.total_questions || 0;
+                });
+                
+                document.getElementById('createdTests').textContent = data.tests.length;
+                document.getElementById('totalAttempts').textContent = totalAttempts;
+                document.getElementById('totalQuestions').textContent = totalQuestions;
+                document.getElementById('avgStudentScore').textContent = '--';
+            }
+            {% endif %}
+            
+        } catch (error) {
+            console.error('Error loading dashboard stats:', error);
+        }
+    }
+
+    // Add hover effects to stat cards
+    document.addEventListener('DOMContentLoaded', function() {
+        const statCards = document.querySelectorAll('.glass-card');
+        statCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px)';
+                this.style.transition = 'transform 0.3s ease';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    });
+</script>
+{% endblock %}

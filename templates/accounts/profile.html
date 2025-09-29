@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profil - Buxoro Bilimdonlar Maktabi{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="glass-card p-5" data-aos="zoom-in">
+            <div class="text-center mb-4">
+                <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                     style="width: 100px; height: 100px;">
+                    <i class="fas fa-user fa-3x text-white"></i>
+                </div>
+                <h2 class="text-white mb-2">Profil Ma'lumotlari</h2>
+                <span class="badge bg-secondary fs-6">{{ user.get_role_display }}</span>
+            </div>
+
+            <form id="profileForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label text-white">
+                                <i class="fas fa-user me-2"></i>Ism
+                            </label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" 
+                                   value="{{ user.first_name }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label text-white">
+                                <i class="fas fa-user me-2"></i>Familiya
+                            </label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" 
+                                   value="{{ user.last_name }}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="username" class="form-label text-white">
+                                <i class="fas fa-at me-2"></i>Foydalanuvchi nomi
+                            </label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   value="{{ user.username }}" readonly>
+                            <div class="form-text text-white-50">Foydalanuvchi nomini o'zgartirib bo'lmaydi</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="email" class="form-label text-white">
+                                <i class="fas fa-envelope me-2"></i>Email manzil
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ user.email }}" readonly>
+                            <div class="form-text text-white-50">Email manzilni o'zgartirib bo'lmaydi</div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if user.role == 'student' %}
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="student_id" class="form-label text-white">
+                                <i class="fas fa-id-card me-2"></i>O'quvchi ID
+                            </label>
+                            <input type="text" class="form-control" id="student_id" name="student_id" 
+                                   value="{{ user.student_id|default:'' }}" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="grade" class="form-label text-white">
+                                <i class="fas fa-graduation-cap me-2"></i>Sinf
+                            </label>
+                            <input type="text" class="form-control" id="grade" name="grade" 
+                                   value="{{ user.grade|default:'' }}-sinf" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="class_name" class="form-label text-white">
+                                <i class="fas fa-users me-2"></i>Sinf nomi
+                            </label>
+                            <input type="text" class="form-control" id="class_name" name="class_name" 
+                                   value="{{ user.class_name|default:'' }}">
+                        </div>
+                    </div>
+                </div>
+                {% elif user.role == 'teacher' %}
+                <div class="mb-3">
+                    <label for="subject" class="form-label text-white">
+                        <i class="fas fa-book me-2"></i>O'qitiladigan fan
+                    </label>
+                    <input type="text" class="form-control" id="subject" name="subject" 
+                           value="{{ user.subject|default:'' }}">
+                </div>
+                {% endif %}
+
+                <div class="mb-4">
+                    <label for="phone_number" class="form-label text-white">
+                        <i class="fas fa-phone me-2"></i>Telefon raqam
+                    </label>
+                    <input type="tel" class="form-control" id="phone_number" name="phone_number" 
+                           value="{{ user.phone_number|default:'' }}">
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="glass-card p-3">
+                            <h6 class="text-white mb-2">
+                                <i class="fas fa-calendar-alt me-2"></i>Ro'yxatdan o'tilgan
+                            </h6>
+                            <p class="text-white-50 mb-0">{{ user.date_joined|date:"d.m.Y H:i" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="glass-card p-3">
+                            <h6 class="text-white mb-2">
+                                <i class="fas fa-check-circle me-2"></i>Holat
+                            </h6>
+                            <span class="badge bg-{% if user.is_verified %}success{% else %}warning{% endif %}">
+                                {% if user.is_verified %}Tasdiqlangan{% else %}Kutilmoqda{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3 justify-content-center">
+                    <button type="submit" class="btn btn-primary btn-lg" id="updateBtn">
+                        <i class="fas fa-save me-2"></i>
+                        O'zgarishlarni Saqlash
+                    </button>
+                    <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Orqaga
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Security Section -->
+        <div class="glass-card p-4 mt-4" data-aos="fade-up" data-aos-delay="200">
+            <h4 class="text-white mb-4">
+                <i class="fas fa-shield-alt me-2"></i>
+                Xavfsizlik
+            </h4>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="d-grid">
+                        <button type="button" class="btn btn-outline-warning btn-lg" onclick="changePassword()">
+                            <i class="fas fa-key me-2"></i>
+                            Parolni O'zgartirish
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-grid">
+                        <button type="button" class="btn btn-outline-danger btn-lg" onclick="confirmLogout()">
+                            <i class="fas fa-sign-out-alt me-2"></i>
+                            Barcha Qurilmalardan Chiqish
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="passwordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark border-0">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-key me-2"></i>Parolni O'zgartirish
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="passwordForm">
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label text-white">Joriy parol</label>
+                        <input type="password" class="form-control" id="current_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label text-white">Yangi parol</label>
+                        <input type="password" class="form-control" id="new_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label text-white">Yangi parolni tasdiqlash</label>
+                        <input type="password" class="form-control" id="confirm_password" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+                <button type="button" class="btn btn-primary" onclick="updatePassword()">O'zgartirish</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('profileForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const updateBtn = document.getElementById('updateBtn');
+        const originalText = showLoading(updateBtn);
+        
+        const formData = {
+            first_name: document.getElementById('first_name').value,
+            last_name: document.getElementById('last_name').value,
+            phone_number: document.getElementById('phone_number').value || null
+        };
+        
+        {% if user.role == 'student' %}
+        formData.class_name = document.getElementById('class_name').value;
+        {% elif user.role == 'teacher' %}
+        formData.subject = document.getElementById('subject').value;
+        {% endif %}
+        
+        try {
+            const response = await fetch('{% url "accounts:profile" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                showAlert('Profil muvaffaqiyatli yangilandi!', 'success');
+            } else {
+                showAlert(data.error || 'Profilni yangilashda xatolik yuz berdi', 'danger');
+            }
+        } catch (error) {
+            showAlert('Server bilan bog\'lanishda xatolik yuz berdi', 'danger');
+        } finally {
+            hideLoading(updateBtn, originalText);
+        }
+    });
+
+    function changePassword() {
+        const passwordModal = new bootstrap.Modal(document.getElementById('passwordModal'));
+        passwordModal.show();
+    }
+
+    function updatePassword() {
+        const currentPassword = document.getElementById('current_password').value;
+        const newPassword = document.getElementById('new_password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+        
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            showAlert('Barcha maydonlarni to\'ldiring', 'danger');
+            return;
+        }
+        
+        if (newPassword !== confirmPassword) {
+            showAlert('Yangi parollar mos kelmaydi', 'danger');
+            return;
+        }
+        
+        if (newPassword.length < 8) {
+            showAlert('Yangi parol kamida 8 ta belgidan iborat bo\'lishi kerak', 'danger');
+            return;
+        }
+        
+        // Here you would implement the password change functionality
+        showAlert('Parol o\'zgartirish funksiyasi hozircha mavjud emas', 'warning');
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('passwordModal'));
+        modal.hide();
+    }
+
+    function confirmLogout() {
+        if (confirm('Barcha qurilmalardan chiqishni xohlaysizmi?')) {
+            logout();
+        }
+    }
+
+    // Add input animations
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputs = document.querySelectorAll('.form-control:not([readonly])');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'scale(1.02)';
+                this.parentElement.style.transition = 'transform 0.3s ease';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'scale(1)';
+            });
+        });
+    });
+</script>
+{% endblock %}

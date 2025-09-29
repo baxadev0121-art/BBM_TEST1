@@ -1,0 +1,389 @@
+/* Additional custom styles for the test platform */
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.6);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.8);
+}
+
+/* Enhanced glassmorphism effects */
+.glass-card-premium {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+}
+
+/* Custom button animations */
+.btn-spring {
+    transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.btn-spring:hover {
+    transform: translateY(-3px) scale(1.05);
+}
+
+.btn-spring:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Floating elements animation */
+.float {
+    animation: float-animation 6s ease-in-out infinite;
+}
+
+@keyframes float-animation {
+    0% { transform: translate(0px, 0px) rotate(0deg); }
+    33% { transform: translate(30px, -30px) rotate(120deg); }
+    66% { transform: translate(-20px, 20px) rotate(240deg); }
+    100% { transform: translate(0px, 0px) rotate(360deg); }
+}
+
+/* Enhanced loading spinner */
+.spinner-grow-custom {
+    width: 3rem;
+    height: 3rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    opacity: 0;
+    animation: spinner-grow 1s linear infinite;
+}
+
+/* Success/Error animations */
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-in-right {
+    animation: slideInRight 0.5s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Enhanced form controls */
+.form-floating-custom {
+    position: relative;
+}
+
+.form-floating-custom .form-control {
+    height: 3.5rem;
+    line-height: 1.25;
+    padding: 1rem 0.75rem;
+}
+
+.form-floating-custom > label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    padding: 1rem 0.75rem;
+    pointer-events: none;
+    border: 1px solid transparent;
+    transform-origin: 0 0;
+    transition: opacity 0.1s ease-in-out, transform 0.1s ease-in-out;
+}
+
+.form-floating-custom > .form-control:focus ~ label,
+.form-floating-custom > .form-control:not(:placeholder-shown) ~ label {
+    opacity: 0.65;
+    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+}
+
+/* Card hover effects */
+.card-hover {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.card-hover:hover::before {
+    left: 100%;
+}
+
+.card-hover:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Status badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.verified {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+
+.status-badge.pending {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    color: #000;
+}
+
+.status-badge.rejected {
+    background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+    color: white;
+}
+
+/* Statistics cards */
+.stat-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover::after {
+    transform: scaleX(1);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.stat-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Mobile responsive enhancements */
+@media (max-width: 768px) {
+    .glass-card {
+        margin: 0 10px;
+        padding: 1.5rem !important;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+    }
+    
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .nav-pills {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .glass-card {
+        background: white !important;
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+    }
+    
+    .text-white {
+        color: #000 !important;
+    }
+    
+    .text-white-50 {
+        color: #666 !important;
+    }
+}
+
+/* Accessibility improvements */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Focus styles */
+.btn:focus,
+.form-control:focus,
+.form-select:focus {
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+    border-color: #667eea !important;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .glass-card {
+        background: rgba(255, 255, 255, 0.9) !important;
+        border: 2px solid #000 !important;
+    }
+    
+    .text-white {
+        color: #000 !important;
+    }
+    
+    .text-white-50 {
+        color: #333 !important;
+    }
+}
+
+/* Test Creation Styles */
+.question-item {
+    border-left: 4px solid var(--bs-primary);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.question-item:hover {
+    border-left-color: var(--bs-success);
+    transform: translateX(5px);
+}
+
+.choice-item {
+    transition: all 0.2s ease;
+}
+
+.choice-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.form-check-input:checked {
+    background-color: var(--bs-success);
+    border-color: var(--bs-success);
+}
+
+.add-choice, .remove-choice {
+    transition: all 0.2s ease;
+}
+
+.add-choice:hover {
+    transform: scale(1.05);
+}
+
+.remove-choice:hover {
+    transform: scale(1.1);
+    background-color: var(--bs-danger) !important;
+}
+
+/* Question numbering */
+.question-number {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--bs-primary), var(--bs-info));
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+/* Enhanced form controls for test creation */
+.glass-input:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Success animations */
+@keyframes pulse-success {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.success-pulse {
+    animation: pulse-success 0.6s ease-in-out;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

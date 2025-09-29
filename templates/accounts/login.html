@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tizimga Kirish - Buxoro Bilimdonlar Maktabi{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-5 col-md-7">
+        <div class="glass-card p-5" data-aos="zoom-in">
+            <div class="text-center mb-4">
+                <div class="text-white mb-3">
+                    <i class="fas fa-sign-in-alt fa-3x"></i>
+                </div>
+                <h2 class="text-white mb-2">Tizimga Kirish</h2>
+                <p class="text-white-50">Maktab hisobingiz bilan kiring</p>
+            </div>
+
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label for="username" class="form-label text-white">
+                        <i class="fas fa-user me-2"></i>Foydalanuvchi nomi
+                    </label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="password" class="form-label text-white">
+                        <i class="fas fa-lock me-2"></i>Parol
+                    </label>
+                    <div class="position-relative">
+                        <input type="password" class="form-control" id="password" name="password" required>
+                        <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y text-muted" 
+                                onclick="togglePassword('password')" style="z-index: 10;">
+                            <i class="fas fa-eye" id="password-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="d-grid mb-4">
+                    <button type="submit" class="btn btn-primary btn-lg" id="loginBtn">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        Kirish
+                    </button>
+                </div>
+
+                <div class="text-center">
+                    <p class="text-white-50 mb-0">
+                        Hisobingiz yo'qmi? 
+                        <a href="{% url 'accounts:signup' %}" class="text-white text-decoration-none">
+                            <strong>Ro'yxatdan o'ting</strong>
+                        </a>
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Info Card -->
+        <div class="glass-card p-4 mt-4" data-aos="fade-up" data-aos-delay="200">
+            <div class="text-center">
+                <h5 class="text-white mb-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Muhim Ma'lumot
+                </h5>
+                <p class="text-white-50 mb-0">
+                    Tizimga kirish uchun admin tomonidan tasdiqlanganligingizni tekshiring. 
+                    Agar hisobingiz tasdiqlanmagan bo'lsa, admin bilan bog'laning.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const loginBtn = document.getElementById('loginBtn');
+        const originalText = showLoading(loginBtn);
+        
+        const formData = {
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value
+        };
+        
+        try {
+            const response = await fetch('{% url "accounts:login" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                showAlert('Muvaffaqiyatli kirildi! Dashboard ga yo\'naltirilmoqda...', 'success');
+                setTimeout(() => {
+                    window.location.href = '{% url "accounts:dashboard" %}';
+                }, 1500);
+            } else {
+                showAlert(data.error || 'Kirish jarayonida xatolik yuz berdi', 'danger');
+                hideLoading(loginBtn, originalText);
+            }
+        } catch (error) {
+            showAlert('Server bilan bog\'lanishda xatolik yuz berdi', 'danger');
+            hideLoading(loginBtn, originalText);
+        }
+    });
+
+    function togglePassword(fieldId) {
+        const field = document.getElementById(fieldId);
+        const eye = document.getElementById(fieldId + '-eye');
+        
+        if (field.type === 'password') {
+            field.type = 'text';
+            eye.classList.remove('fa-eye');
+            eye.classList.add('fa-eye-slash');
+        } else {
+            field.type = 'password';
+            eye.classList.remove('fa-eye-slash');
+            eye.classList.add('fa-eye');
+        }
+    }
+
+    // Add input animations
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputs = document.querySelectorAll('.form-control');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'scale(1.02)';
+                this.parentElement.style.transition = 'transform 0.3s ease';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'scale(1)';
+            });
+        });
+    });
+</script>
+{% endblock %}

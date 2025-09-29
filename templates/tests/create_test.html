@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Test Yaratish - Buxoro Bilimdonlar Maktabi{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="glass-card p-5" data-aos="fade-up">
+            <div class="text-center mb-5">
+                <div class="text-primary mb-3">
+                    <i class="fas fa-plus-circle fa-3x"></i>
+                </div>
+                <h2 class="text-white mb-2">Yangi Test Yaratish</h2>
+                <p class="text-white-50">O'quvchilar uchun test tuzish</p>
+            </div>
+
+            <form id="createTestForm" method="post">
+                {% csrf_token %}
+                
+                <!-- Test asosiy ma'lumotlari -->
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-4">
+                            <label for="testTitle" class="form-label text-white">
+                                <i class="fas fa-heading"></i> Test nomi
+                            </label>
+                            <input type="text" class="form-control glass-input" id="testTitle" name="title" 
+                                   placeholder="Masalan: Matematika - Algebraik ifodalar" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-4">
+                            <label for="testGrade" class="form-label text-white">
+                                <i class="fas fa-layer-group"></i> Sinf
+                            </label>
+                            <select class="form-select glass-input" id="testGrade" name="grade" required>
+                                <option value="">Sinf tanlang</option>
+                                {% for i in "123456789" %}
+                                <option value="{{ i }}">{{ i }}-sinf</option>
+                                {% endfor %}
+                                <option value="10">10-sinf</option>
+                                <option value="11">11-sinf</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-4">
+                            <label for="testSubject" class="form-label text-white">
+                                <i class="fas fa-book"></i> Fan
+                            </label>
+                            <input type="text" class="form-control glass-input" id="testSubject" name="subject" 
+                                   placeholder="Masalan: Matematika" required>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-4">
+                            <label for="timeLimit" class="form-label text-white">
+                                <i class="fas fa-clock"></i> Vaqt chegarasi (daqiqa)
+                            </label>
+                            <input type="number" class="form-control glass-input" id="timeLimit" name="time_limit" 
+                                   min="5" max="180" value="45" required>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-4">
+                            <label for="maxAttempts" class="form-label text-white">
+                                <i class="fas fa-redo"></i> Maksimal urinishlar
+                            </label>
+                            <input type="number" class="form-control glass-input" id="maxAttempts" name="max_attempts" 
+                                   min="1" max="5" value="1" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="testDescription" class="form-label text-white">
+                        <i class="fas fa-align-left"></i> Test tavsifi
+                    </label>
+                    <textarea class="form-control glass-input" id="testDescription" name="description" 
+                              rows="3" placeholder="Test haqida qisqacha ma'lumot"></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="showResults" name="show_results" checked>
+                            <label class="form-check-label text-white" for="showResults">
+                                <i class="fas fa-eye"></i> O'quvchilarga natijalarni ko'rsatish
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="isActive" name="is_active" checked>
+                            <label class="form-check-label text-white" for="isActive">
+                                <i class="fas fa-power-off"></i> Testni faollashtirish
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Savollar qismi -->
+                <div class="mb-5">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="text-white">
+                            <i class="fas fa-question-circle"></i> Savollar
+                        </h4>
+                        <button type="button" class="btn btn-success btn-sm" id="addQuestionBtn">
+                            <i class="fas fa-plus"></i> Savol qo'shish
+                        </button>
+                    </div>
+                    
+                    <div id="questionsContainer">
+                        <!-- Savollar bu yerda qo'shiladi -->
+                    </div>
+                </div>
+
+                <!-- Tugmalar -->
+                <div class="text-center">
+                    <button type="button" class="btn btn-secondary btn-lg me-3" onclick="history.back()">
+                        <i class="fas fa-arrow-left"></i> Bekor qilish
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i> Testni saqlash
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Savol shablon (Ko'rinmas) -->
+<template id="questionTemplate">
+    <div class="question-item glass-card p-4 mb-4" data-aos="fade-up">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <h6 class="text-white mb-0">Savol <span class="question-number">1</span></h6>
+            <button type="button" class="btn btn-danger btn-sm remove-question">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="mb-3">
+                    <label class="form-label text-white">Savol matni</label>
+                    <textarea class="form-control glass-input" name="question_text[]" rows="3" required></textarea>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="mb-3">
+                    <label class="form-label text-white">Tur</label>
+                    <select class="form-select glass-input question-type" name="question_type[]" required>
+                        <option value="single_choice">Bir javob</option>
+                        <option value="multiple_choice">Ko'p javob</option>
+                        <option value="text_answer">Matnli javob</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="mb-3">
+                    <label class="form-label text-white">Ball</label>
+                    <input type="number" class="form-control glass-input" name="points[]" min="0.5" max="10" step="0.5" value="1" required>
+                </div>
+            </div>
+        </div>
+        
+        <div class="choices-container">
+            <div class="mb-3">
+                <label class="form-label text-white">Javob variantlari</label>
+                <div class="choice-items">
+                    <div class="choice-item d-flex align-items-center mb-2">
+                        <input type="radio" class="form-check-input me-2" name="correct_choice_1" value="0">
+                        <input type="text" class="form-control glass-input" name="choices_1[]" placeholder="Javob varianti 1">
+                    </div>
+                    <div class="choice-item d-flex align-items-center mb-2">
+                        <input type="radio" class="form-check-input me-2" name="correct_choice_1" value="1">
+                        <input type="text" class="form-control glass-input" name="choices_1[]" placeholder="Javob varianti 2">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-info btn-sm add-choice">
+                    <i class="fas fa-plus"></i> Variant qo'shish
+                </button>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label text-white">Tushuntirish (ixtiyoriy)</label>
+            <textarea class="form-control glass-input" name="explanation[]" rows="2" placeholder="Javob uchun tushuntirish"></textarea>
+        </div>
+    </div>
+</template>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let questionCount = 0;
+    
+    // Savol qo'shish tugmasi
+    document.getElementById('addQuestionBtn').addEventListener('click', function() {
+        addQuestion();
+    });
+    
+    // Birinchi savolni qo'shish
+    addQuestion();
+    
+    function addQuestion() {
+        questionCount++;
+        const template = document.getElementById('questionTemplate');
+        const clone = template.content.cloneNode(true);
+        
+        // Savol raqamini yangilash
+        clone.querySelector('.question-number').textContent = questionCount;
+        
+        // Name attributelarini yangilash
+        const inputs = clone.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.name && input.name.includes('_1')) {
+                input.name = input.name.replace('_1', '_' + questionCount);
+            }
+            if (input.name === 'correct_choice_1') {
+                input.name = 'correct_choice_' + questionCount;
+            }
+        });
+        
+        // O'chirish tugmasiga event listener
+        clone.querySelector('.remove-question').addEventListener('click', function() {
+            if (questionCount > 1) {
+                this.closest('.question-item').remove();
+            } else {
+                alert('Kamida bitta savol bo\'lishi kerak!');
+            }
+        });
+        
+        // Savol turini o'zgartirish
+        clone.querySelector('.question-type').addEventListener('change', function() {
+            toggleChoicesContainer(this);
+        });
+        
+        // Variant qo'shish tugmasi
+        clone.querySelector('.add-choice').addEventListener('click', function() {
+            addChoice(this);
+        });
+        
+        document.getElementById('questionsContainer').appendChild(clone);
+    }
+    
+    function toggleChoicesContainer(select) {
+        const container = select.closest('.question-item').querySelector('.choices-container');
+        if (select.value === 'text_answer') {
+            container.style.display = 'none';
+        } else {
+            container.style.display = 'block';
+        }
+    }
+    
+    function addChoice(button) {
+        const choiceItems = button.parentElement.querySelector('.choice-items');
+        const choiceCount = choiceItems.children.length;
+        const questionNum = button.closest('.question-item').querySelector('.question-number').textContent;
+        
+        const choiceHtml = `
+            <div class="choice-item d-flex align-items-center mb-2">
+                <input type="radio" class="form-check-input me-2" name="correct_choice_${questionNum}" value="${choiceCount}">
+                <input type="text" class="form-control glass-input" name="choices_${questionNum}[]" placeholder="Javob varianti ${choiceCount + 1}">
+                <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-choice">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        choiceItems.insertAdjacentHTML('beforeend', choiceHtml);
+        
+        // O'chirish tugmasiga event
+        choiceItems.lastElementChild.querySelector('.remove-choice').addEventListener('click', function() {
+            if (choiceItems.children.length > 2) {
+                this.closest('.choice-item').remove();
+            } else {
+                alert('Kamida ikkita variant bo\'lishi kerak!');
+            }
+        });
+    }
+    
+    // Form yuborish
+    document.getElementById('createTestForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        fetch('/tests/create/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Test muvaffaqiyatli yaratildi!');
+                window.location.href = '/dashboard/';
+            } else {
+                alert('Xatolik yuz berdi: ' + (data.error || 'Noma\'lum xatolik'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Xatolik yuz berdi!');
+        });
+    });
+});
+</script>
+{% endblock %}

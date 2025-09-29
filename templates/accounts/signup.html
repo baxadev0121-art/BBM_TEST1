@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ro'yxatdan O'tish - Buxoro Bilimdonlar Maktabi{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+        <div class="glass-card p-5" data-aos="zoom-in">
+            <div class="text-center mb-4">
+                <div class="text-white mb-3">
+                    <i class="fas fa-user-plus fa-3x"></i>
+                </div>
+                <h2 class="text-white mb-2">Ro'yxatdan O'tish</h2>
+                <p class="text-white-50">Maktab hisobingizni yarating</p>
+            </div>
+
+            <form id="signupForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label text-white">
+                                <i class="fas fa-user me-2"></i>Ism
+                            </label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label text-white">
+                                <i class="fas fa-user me-2"></i>Familiya
+                            </label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="username" class="form-label text-white">
+                                <i class="fas fa-at me-2"></i>Foydalanuvchi nomi
+                            </label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="email" class="form-label text-white">
+                                <i class="fas fa-envelope me-2"></i>Maktab Email
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                            <div class="form-text text-white-50">
+                                @buxorobilimdonlar.uz yoki @student.buxorobilimdonlar.uz
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="password" class="form-label text-white">
+                                <i class="fas fa-lock me-2"></i>Parol
+                            </label>
+                            <div class="position-relative">
+                                <input type="password" class="form-control" id="password" name="password" required>
+                                <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y text-muted"
+                                        onclick="togglePassword('password')" style="z-index: 10;">
+                                    <i class="fas fa-eye" id="password-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="role" class="form-label text-white">
+                                <i class="fas fa-user-tag me-2"></i>Rol
+                            </label>
+                            <select class="form-control" id="role" name="role" required onchange="toggleRoleFields()">
+                                <option value="">Rolni tanlang</option>
+                                <option value="student">O'quvchi</option>
+                                <option value="teacher">O'qituvchi</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student-specific fields -->
+                <div id="studentFields" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="student_id" class="form-label text-white">
+                                    <i class="fas fa-id-card me-2"></i>O'quvchi ID
+                                </label>
+                                <input type="text" class="form-control" id="student_id" name="student_id">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="grade" class="form-label text-white">
+                                    <i class="fas fa-graduation-cap me-2"></i>Sinf
+                                </label>
+                                <select class="form-control" id="grade" name="grade">
+                                    <option value="">Sinfni tanlang</option>
+                                    <option value="5">5-sinf</option>
+                                    <option value="6">6-sinf</option>
+                                    <option value="7">7-sinf</option>
+                                    <option value="8">8-sinf</option>
+                                    <option value="9">9-sinf</option>
+                                    <option value="10">10-sinf</option>
+                                    <option value="11">11-sinf</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="class_name" class="form-label text-white">
+                                    <i class="fas fa-users me-2"></i>Sinf nomi
+                                </label>
+                                <input type="text" class="form-control" id="class_name" name="class_name" placeholder="Masalan: 9-A">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teacher-specific fields -->
+                <div id="teacherFields" style="display: none;">
+                    <div class="mb-3">
+                        <label for="subject" class="form-label text-white">
+                            <i class="fas fa-book me-2"></i>O'qitiladigan fan
+                        </label>
+                        <input type="text" class="form-control" id="subject" name="subject" placeholder="Masalan: Matematika, Fizika, Ona tili">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="phone_number" class="form-label text-white">
+                        <i class="fas fa-phone me-2"></i>Telefon raqam (ixtiyoriy)
+                    </label>
+                    <input type="tel" class="form-control" id="phone_number" name="phone_number" placeholder="+998">
+                </div>
+
+                <div class="d-grid mb-4">
+                    <button type="submit" class="btn btn-primary btn-lg" id="signupBtn">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Ro'yxatdan O'tish
+                    </button>
+                </div>
+
+                <div class="text-center">
+                    <p class="text-white-50 mb-0">
+                        Hisobingiz bormi? 
+                        <a href="{% url 'accounts:login' %}" class="text-white text-decoration-none">
+                            <strong>Kirish</strong>
+                        </a>
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Info Card -->
+        <div class="glass-card p-4 mt-4" data-aos="fade-up" data-aos-delay="200">
+            <div class="text-center">
+                <h5 class="text-white mb-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Muhim Eslatma
+                </h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled text-white-50 text-start">
+                            <li><i class="fas fa-check text-success me-2"></i>Faqat maktab email manzili qabul qilinadi</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Admin tasdiqlashini kuting</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled text-white-50 text-start">
+                            <li><i class="fas fa-check text-success me-2"></i>To'liq ma'lumotlarni kiriting</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Kuchli parol tanlang</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleRoleFields() {
+        const role = document.getElementById('role').value;
+        const studentFields = document.getElementById('studentFields');
+        const teacherFields = document.getElementById('teacherFields');
+        
+        if (role === 'student') {
+            studentFields.style.display = 'block';
+            teacherFields.style.display = 'none';
+            
+            // Make student fields required
+            document.getElementById('student_id').required = true;
+            document.getElementById('grade').required = true;
+            document.getElementById('subject').required = false;
+        } else if (role === 'teacher') {
+            studentFields.style.display = 'none';
+            teacherFields.style.display = 'block';
+            
+            // Make teacher fields required
+            document.getElementById('subject').required = true;
+            document.getElementById('student_id').required = false;
+            document.getElementById('grade').required = false;
+        } else {
+            studentFields.style.display = 'none';
+            teacherFields.style.display = 'none';
+            
+            // Make all role-specific fields optional
+            document.getElementById('student_id').required = false;
+            document.getElementById('grade').required = false;
+            document.getElementById('subject').required = false;
+        }
+    }
+
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const signupBtn = document.getElementById('signupBtn');
+        const originalText = showLoading(signupBtn);
+        
+        const formData = {
+            first_name: document.getElementById('first_name').value,
+            last_name: document.getElementById('last_name').value,
+            username: document.getElementById('username').value,
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value,
+            role: document.getElementById('role').value,
+            phone_number: document.getElementById('phone_number').value || null
+        };
+        
+        // Add role-specific fields
+        if (formData.role === 'student') {
+            formData.student_id = document.getElementById('student_id').value;
+            formData.grade = document.getElementById('grade').value ? parseInt(document.getElementById('grade').value) : null;
+            formData.class_name = document.getElementById('class_name').value;
+        } else if (formData.role === 'teacher') {
+            formData.subject = document.getElementById('subject').value;
+        }
+        
+        try {
+            const response = await fetch('{% url "accounts:signup" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                showAlert(
+                    'Hisobingiz muvaffaqiyatli yaratildi! Admin tasdiqlashini kuting. Login sahifasiga yo\'naltirilmoqda...', 
+                    'success'
+                );
+                setTimeout(() => {
+                    window.location.href = '{% url "accounts:login" %}';
+                }, 3000);
+            } else {
+                showAlert(data.error || 'Ro\'yxatdan o\'tishda xatolik yuz berdi', 'danger');
+                hideLoading(signupBtn, originalText);
+            }
+        } catch (error) {
+            showAlert('Server bilan bog\'lanishda xatolik yuz berdi', 'danger');
+            hideLoading(signupBtn, originalText);
+        }
+    });
+
+    function togglePassword(fieldId) {
+        const field = document.getElementById(fieldId);
+        const eye = document.getElementById(fieldId + '-eye');
+        
+        if (field.type === 'password') {
+            field.type = 'text';
+            eye.classList.remove('fa-eye');
+            eye.classList.add('fa-eye-slash');
+        } else {
+            field.type = 'password';
+            eye.classList.remove('fa-eye-slash');
+            eye.classList.add('fa-eye');
+        }
+    }
+
+    // Add input animations and validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputs = document.querySelectorAll('.form-control');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'scale(1.02)';
+                this.parentElement.style.transition = 'transform 0.3s ease';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'scale(1)';
+            });
+        });
+        
+        // Email validation
+        const emailInput = document.getElementById('email');
+        emailInput.addEventListener('blur', function() {
+            const email = this.value;
+            const allowedDomains = ['buxorobilimdonlar.uz', 'student.buxorobilimdonlar.uz'];
+            const domain = email.split('@')[1];
+            
+            if (email && !allowedDomains.includes(domain)) {
+                this.setCustomValidity('Faqat maktab email manzili qabul qilinadi');
+                this.style.borderColor = '#f44336';
+            } else {
+                this.setCustomValidity('');
+                this.style.borderColor = '';
+            }
+        });
+    });
+</script>
+{% endblock %}

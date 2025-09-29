@@ -1,0 +1,386 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Testni Tahrirlash - {{ test.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+body {
+    background: linear-gradient(135deg, #6a8dff 0%, #a16ae8 100%);
+    min-height: 100vh;
+}
+.glass-card {
+    background: rgba(255,255,255,0.15);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.18);
+}
+.glass-input, .form-control, .form-select {
+    background: rgba(255,255,255,0.25) !important;
+    color: #222 !important;
+    border: none !important;
+    border-radius: 10px !important;
+}
+.form-label, .text-white {
+    color: #fff !important;
+}
+.btn-success, .btn-primary {
+    background: linear-gradient(90deg, #6a8dff 0%, #a16ae8 100%);
+    border: none;
+    color: #fff;
+}
+.btn-success:hover, .btn-primary:hover {
+    background: linear-gradient(90deg, #a16ae8 0%, #6a8dff 100%);
+    color: #fff;
+}
+.question-item {
+    border-left: 4px solid #6a8dff;
+    background: rgba(255,255,255,0.22);
+}
+.modal-content.glass-card {
+    background: rgba(255,255,255,0.25);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.18);
+}
+.add-choice-modal, .add-choice {
+    background: linear-gradient(90deg, #6a8dff 0%, #a16ae8 100%);
+    color: #fff;
+    border: none;
+}
+.add-choice-modal:hover, .add-choice:hover {
+    background: linear-gradient(90deg, #a16ae8 0%, #6a8dff 100%);
+    color: #fff;
+}
+.remove-choice, .remove-question {
+    background: #ff6a6a;
+    color: #fff;
+    border: none;
+}
+.remove-choice:hover, .remove-question:hover {
+    background: #e84141;
+    color: #fff;
+}
+::-webkit-input-placeholder { color: #888 !important; }
+::-moz-placeholder { color: #888 !important; }
+:-ms-input-placeholder { color: #888 !important; }
+::placeholder { color: #888 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="glass-card p-4">
+        <h2 class="mb-4" style="color:#fff;"><i class="fas fa-edit me-2"></i>Testni Tahrirlash</h2>
+        <form id="editTestForm">
+            <input type="hidden" name="test_id" value="{{ test.id }}">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Test nomi</label>
+                    <input type="text" class="form-control glass-input" name="title" value="{{ test.title }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Fan</label>
+                    <input type="text" class="form-control glass-input" name="subject" value="{{ test.subject }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Sinf</label>
+                    <input type="number" class="form-control glass-input" name="grade" value="{{ test.grade }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Vaqt chegarasi (daqiqa)</label>
+                    <input type="number" class="form-control glass-input" name="time_limit" value="{{ test.time_limit }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Maksimal urinishlar</label>
+                    <input type="number" class="form-control glass-input" name="max_attempts" value="{{ test.max_attempts }}" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Test tavsifi</label>
+                    <textarea class="form-control glass-input" name="description" rows="2">{{ test.description }}</textarea>
+                </div>
+            </div>
+            <div class="form-check mt-3">
+                <input class="form-check-input" type="checkbox" name="show_results" {% if test.show_results %}checked{% endif %}>
+                <label class="form-check-label">O'quvchilarga natijalarni ko'rsatish</label>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="is_active" {% if test.is_active %}checked{% endif %}>
+                <label class="form-check-label">Testni faollashtirish</label>
+            </div>
+            <hr class="my-4">
+            <h4 class="mb-3" style="color:#fff;"><i class="fas fa-question-circle"></i> Savollarni Tahrirlash</h4>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <button type="button" class="btn btn-success btn-sm" id="addQuestionBtn" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
+                    <i class="fas fa-plus"></i> Savol qo'shish
+                </button>
+            </div>
+            <div id="questionsContainer"></div>
+        </form>
+    </div>
+</div>
+
+<!-- Savol qo'shish modal -->
+<div class="modal fade" id="addQuestionModal" tabindex="-1" aria-labelledby="addQuestionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addQuestionModalLabel"><i class="fas fa-question-circle"></i> Yangi Savol Qo'shish</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Yopish"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addQuestionForm">
+          <div class="mb-3">
+            <label class="form-label">Savol matni</label>
+            <textarea class="form-control" name="question_text" rows="2" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tur</label>
+            <select class="form-select" name="question_type" id="modalQuestionType" required>
+              <option value="single_choice">Bir javob</option>
+              <option value="multiple_choice">Ko'p javob</option>
+              <option value="text_answer">Matnli javob</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Ball</label>
+            <input type="number" class="form-control" name="points" min="0.5" max="10" step="0.5" value="1" required>
+          </div>
+          <div class="choices-container mb-3" id="modalChoicesContainer">
+            <label class="form-label">Javob variantlari</label>
+            <div class="choice-items">
+              <div class="choice-item d-flex align-items-center mb-2">
+                <input type="checkbox" class="form-check-input me-2" name="is_correct_0">
+                <input type="text" class="form-control" name="choice_text_0" placeholder="Variant 1">
+              </div>
+              <div class="choice-item d-flex align-items-center mb-2">
+                <input type="checkbox" class="form-check-input me-2" name="is_correct_1">
+                <input type="text" class="form-control" name="choice_text_1" placeholder="Variant 2">
+              </div>
+            </div>
+            <button type="button" class="btn add-choice-modal btn-sm mt-2">
+              <i class="fas fa-plus"></i> Variant qo'shish
+            </button>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tushuntirish (ixtiyoriy)</label>
+            <textarea class="form-control" name="explanation" rows="1"></textarea>
+          </div>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">SAVOLNI QO'SHISH</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add choice in modal
+    document.querySelector('.add-choice-modal').addEventListener('click', function() {
+        const choiceItems = this.parentElement.querySelector('.choice-items');
+        const choiceCount = choiceItems.children.length;
+        const choiceHtml = `
+            <div class="choice-item d-flex align-items-center mb-2">
+                <input type="checkbox" class="form-check-input me-2" name="is_correct_${choiceCount}">
+                <input type="text" class="form-control" name="choice_text_${choiceCount}" placeholder="Variant ${choiceCount + 1}">
+                <button type="button" class="btn remove-choice btn-sm ms-2">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        choiceItems.insertAdjacentHTML('beforeend', choiceHtml);
+        choiceItems.lastElementChild.querySelector('.remove-choice').addEventListener('click', function() {
+            if (choiceItems.children.length > 2) {
+                this.closest('.choice-item').remove();
+            } else {
+                alert('Kamida ikkita variant bo\'lishi kerak!');
+            }
+        });
+    });
+
+    // Hide/show choices in modal based on type
+    document.getElementById('modalQuestionType').addEventListener('change', function() {
+        const choicesContainer = document.getElementById('modalChoicesContainer');
+        if (this.value === 'text_answer') {
+            choicesContainer.style.display = 'none';
+        } else {
+            choicesContainer.style.display = 'block';
+        }
+    });
+
+    // Add question from modal to main list
+    document.getElementById('addQuestionForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = e.target;
+        const questionText = form.question_text.value;
+        const questionType = form.question_type.value;
+        const points = form.points.value;
+        const explanation = form.explanation.value;
+        let choices = [];
+        if (questionType !== 'text_answer') {
+            const choiceItems = form.querySelectorAll('.choice-item');
+            choiceItems.forEach((item, idx) => {
+                choices.push({
+                    text: item.querySelector('input[type="text"]').value,
+                    is_correct: item.querySelector('input[type="checkbox"]').checked
+                });
+            });
+        }
+        // Build question HTML
+        let questionHtml = `<div class='question-item glass-card p-3 mb-3'>`;
+        questionHtml += `<input type='hidden' name='question_id' value=''>`;
+        questionHtml += `<div class='mb-2'><label class='form-label'>Savol matni</label><textarea class='form-control glass-input' name='question_text' rows='2' required>${questionText}</textarea></div>`;
+        questionHtml += `<div class='mb-2'><label class='form-label'>Tur</label><select class='form-select glass-input' name='question_type' required>`;
+        questionHtml += `<option value='single_choice'${questionType=='single_choice'?' selected':''}>Bir javob</option>`;
+        questionHtml += `<option value='multiple_choice'${questionType=='multiple_choice'?' selected':''}>Ko'p javob</option>`;
+        questionHtml += `<option value='text_answer'${questionType=='text_answer'?' selected':''}>Matnli javob</option>`;
+        questionHtml += `</select></div>`;
+        questionHtml += `<div class='mb-2'><label class='form-label'>Ball</label><input type='number' class='form-control glass-input' name='points' min='0.5' max='10' step='0.5' value='${points}' required></div>`;
+        if (questionType !== 'text_answer') {
+            questionHtml += `<div class='choices-container mb-2'><label class='form-label'>Javob variantlari</label><div class='choice-items'>`;
+            choices.forEach((c, idx) => {
+                questionHtml += `<div class='choice-item d-flex align-items-center mb-2'><input type='checkbox' class='form-check-input me-2' name='is_correct_new_${idx}'${c.is_correct?' checked':''}><input type='text' class='form-control glass-input' name='choice_text_new_${idx}' value='${c.text}' placeholder='Variant ${idx+1}'></div>`;
+            });
+            questionHtml += `</div></div>`;
+        }
+        questionHtml += `<div class='mb-2'><label class='form-label'>Tushuntirish (ixtiyoriy)</label><textarea class='form-control glass-input' name='explanation' rows='1'>${explanation}</textarea></div>`;
+        questionHtml += `<button type='button' class='btn remove-question btn-sm'><i class='fas fa-trash'></i> Savolni o'chirish</button></div>`;
+        // Add to questionsContainer
+        document.getElementById('questionsContainer').insertAdjacentHTML('beforeend', questionHtml);
+        // Remove question event
+        document.getElementById('questionsContainer').lastElementChild.querySelector('.remove-question').addEventListener('click', function() {
+            this.closest('.question-item').remove();
+        });
+        // Hide modal
+        var modal = bootstrap.Modal.getInstance(document.getElementById('addQuestionModal'));
+        modal.hide();
+        form.reset();
+    });
+
+    // Modal ochilganda tozalash va default variantlar
+    document.getElementById('addQuestionModal').addEventListener('show.bs.modal', function () {
+        const form = document.getElementById('addQuestionForm');
+        form.reset();
+        // Variantlarni tozalash va 2 ta default variant qo'shish
+        const choiceItems = form.querySelector('.choice-items');
+        choiceItems.innerHTML = '';
+        for (let i = 0; i < 2; i++) {
+            const div = document.createElement('div');
+            div.className = "choice-item d-flex align-items-center mb-2";
+            div.innerHTML = `
+                <input type="checkbox" class="form-check-input me-2" name="is_correct_${i}">
+                <input type="text" class="form-control" name="choice_text_${i}" placeholder="Variant ${i + 1}">
+            `;
+            choiceItems.appendChild(div);
+        }
+    });
+
+    // Variant qo‘shish tugmasi
+    document.querySelector('.add-choice-modal').onclick = function() {
+        const choiceItems = this.parentElement.querySelector('.choice-items');
+        const idx = choiceItems.children.length;
+        const div = document.createElement('div');
+        div.className = "choice-item d-flex align-items-center mb-2";
+        div.innerHTML = `
+            <input type="checkbox" class="form-check-input me-2" name="is_correct_${idx}">
+            <input type="text" class="form-control" name="choice_text_${idx}" placeholder="Variant ${idx + 1}">
+            <button type="button" class="btn remove-choice btn-sm ms-2">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        div.querySelector('.remove-choice').onclick = function() {
+            if (choiceItems.children.length > 2) {
+                div.remove();
+            } else {
+                alert('Kamida ikkita variant bo\'lishi kerak!');
+            }
+        };
+        choiceItems.appendChild(div);
+    };
+
+    // Save test changes
+    document.getElementById('saveTestBtn').onclick = function() {
+        // Barcha savollarni yig‘ish
+        const questions = [];
+        document.querySelectorAll('#questionsContainer .question-item').forEach(function(q) {
+            const question_text = q.querySelector('[name="question_text"]').value;
+            const question_type = q.querySelector('[name="question_type"]').value;
+            const points = q.querySelector('[name="points"]').value;
+            const explanation = q.querySelector('[name="explanation"]').value;
+            let choices = [];
+            if (question_type !== 'text_answer') {
+                q.querySelectorAll('.choice-item').forEach(function(c) {
+                    choices.push({
+                        text: c.querySelector('input[type="text"]').value,
+                        is_correct: c.querySelector('input[type="checkbox"]').checked
+                    });
+                });
+            }
+            questions.push({
+                question_text,
+                question_type,
+                points,
+                explanation,
+                choices
+            });
+        });
+
+        // Test ma'lumotlarini yig‘ish
+        const testForm = document.getElementById('editTestForm');
+        const testData = {
+            test_id: testForm.test_id.value,
+            title: testForm.title.value,
+            subject: testForm.subject.value,
+            grade: testForm.grade.value,
+            time_limit: testForm.time_limit.value,
+            max_attempts: testForm.max_attempts.value,
+            description: testForm.description.value,
+            show_results: testForm.show_results.checked,
+            is_active: testForm.is_active.checked,
+            questions: questions
+        };
+
+        // AJAX orqali backendga yuborish
+        fetch(window.location.pathname, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(testData)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.questions) {
+                // Savollar oynasini tozalash
+                document.getElementById('questionsContainer').innerHTML = '';
+                // Saqlangan savollarni ko‘rsatish
+                data.questions.forEach(function(q) {
+                    let questionHtml = `<div class='question-item glass-card p-3 mb-3'>`;
+                    questionHtml += `<div class='mb-2'><b>Savol:</b> ${q.question_text}</div>`;
+                    questionHtml += `<div class='mb-2'><b>Tur:</b> ${q.question_type}</div>`;
+                    questionHtml += `<div class='mb-2'><b>Ball:</b> ${q.points}</div>`;
+                    if (q.choices && q.choices.length) {
+                        questionHtml += `<div class='mb-2'><b>Variantlar:</b> ${q.choices.map(c => c.text + (c.is_correct ? " (to'g'ri)" : "")).join(', ')}</div>`;
+                    }
+                    if (q.explanation) {
+                        questionHtml += `<div class='mb-2'><b>Tushuntirish:</b> ${q.explanation}</div>`;
+                    }
+                    questionHtml += `</div>`;
+                    document.getElementById('questionsContainer').insertAdjacentHTML('beforeend', questionHtml);
+                });
+                alert('Test va savollar saqlandi!');
+            } else {
+                alert('Xatolik: ' + (data.error || 'Saqlashda muammo!'));
+            }
+        })
+        .catch(() => alert('Server bilan bog‘lanishda xatolik!'));
+    };
+});
+</script>
+{% endblock %}

@@ -1,0 +1,698 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Test - {{ test.title }} - Buxoro Bilimdonlar Maktabi{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    }
+    
+    .test-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .question-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border: none;
+    }
+    
+    .progress-bar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        transition: width 0.3s ease;
+    }
+    
+    .choice-option {
+        background: rgba(255, 255, 255, 0.8);
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+    
+    .choice-option:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+        transform: translateX(5px);
+    }
+    
+    .choice-option.selected {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.2);
+        box-shadow: 0 0 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .timer-card {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(238, 90, 36, 0.3);
+    }
+    
+    .timer-warning {
+        background: linear-gradient(135deg, #ff9f43 0%, #f0932b 100%);
+    }
+    
+    .timer-danger {
+        background: linear-gradient(135deg, #eb4d4b 0%, #c44569 100%);
+        animation: pulse-danger 1s infinite;
+    }
+    
+    @keyframes pulse-danger {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .navigation-pills {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 15px;
+    }
+    
+    .nav-pill {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 2px solid #e9ecef;
+        background: white;
+        color: #6c757d;
+        display: inline-flex;
+        align-items: center;
+        justify-content-center;
+        margin: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: bold;
+    }
+    
+    .nav-pill:hover {
+        transform: scale(1.1);
+    }
+    
+    .nav-pill.answered {
+        border-color: #28a745;
+        background: #28a745;
+        color: white;
+    }
+    
+    .nav-pill.current {
+        border-color: #667eea;
+        background: #667eea;
+        color: white;
+        transform: scale(1.2);
+    }
+    
+    .submit-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 20px;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="test-container">
+    <!-- Test Header -->
+    <div class="glass-card p-4 mb-4" data-aos="fade-down">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h3 class="text-white mb-1">{{ test.title }}</h3>
+                <p class="text-white-50 mb-0">{{ test.subject }} | {{ test.grade }}-sinf</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <div class="timer-card p-3 d-inline-block" id="timerCard">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-clock fa-lg me-2"></i>
+                        <div>
+                            <div class="fw-bold" id="timeRemaining">--:--</div>
+                            <small>Qolgan vaqt</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="glass-card p-3 mb-4" data-aos="fade-in">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-white">Jarayon:</span>
+            <span class="text-white" id="progressText">0 / 0</span>
+        </div>
+        <div class="progress" style="height: 8px; border-radius: 10px;">
+            <div class="progress-bar" role="progressbar" id="progressBar" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <!-- Question Navigation Pills -->
+    <div class="navigation-pills mb-4 d-none" id="navigationPills" data-aos="fade-up">
+        <div class="text-white mb-3">
+            <i class="fas fa-map-marker-alt me-2"></i>
+            Savollar bo'yicha navigatsiya:
+        </div>
+        <div id="questionPills">
+            <!-- Pills will be generated here -->
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingTest" class="text-center py-5">
+        <div class="glass-card p-5">
+            <div class="text-white">
+                <div class="loading d-inline-block mb-3"></div>
+                <h4>Test yuklanmoqda...</h4>
+                <p>Iltimos, kuting...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Card -->
+    <div id="questionContainer" class="d-none">
+        <div class="question-card p-5 mb-4" data-aos="zoom-in">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <h5 class="text-primary mb-0">
+                    <i class="fas fa-question-circle me-2"></i>
+                    Savol <span id="currentQuestionNumber">1</span>
+                </h5>
+                <span class="badge bg-info" id="questionPoints">1 ball</span>
+            </div>
+            
+            <div class="question-text mb-4" id="questionText">
+                <!-- Question text will be loaded here -->
+            </div>
+            
+            <div id="answerOptions">
+                <!-- Answer options will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="glass-card p-4 mb-4" data-aos="fade-up">
+            <div class="d-flex justify-content-between">
+                <button class="btn btn-outline-light btn-lg" id="prevBtn" onclick="previousQuestion()" disabled>
+                    <i class="fas fa-chevron-left me-2"></i>
+                    Oldingi
+                </button>
+                
+                <div class="d-flex gap-3">
+                    <button class="btn btn-warning btn-lg" onclick="markForReview()">
+                        <i class="fas fa-bookmark me-2"></i>
+                        Belgilash
+                    </button>
+                    <button class="btn btn-info btn-lg" onclick="clearAnswer()">
+                        <i class="fas fa-eraser me-2"></i>
+                        Tozalash
+                    </button>
+                </div>
+                
+                <button class="btn btn-primary btn-lg" id="nextBtn" onclick="nextQuestion()">
+                    Keyingi
+                    <i class="fas fa-chevron-right ms-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Submit Section -->
+        <div class="submit-section d-none" id="submitSection" data-aos="zoom-in">
+            <div class="text-center">
+                <h4 class="mb-3">
+                    <i class="fas fa-flag-checkered me-2"></i>
+                    Testni Yakunlash
+                </h4>
+                <p class="mb-4">
+                    Barcha savollarga javob berdingizmi? Test yakunlangandan keyin o'zgartirib bo'lmaydi.
+                </p>
+                
+                <div class="row text-center mb-4">
+                    <div class="col-md-4">
+                        <div class="mb-2">
+                            <i class="fas fa-check-circle fa-2x text-success"></i>
+                        </div>
+                        <h5 id="answeredCount">0</h5>
+                        <small>Javob berilgan</small>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-2">
+                            <i class="fas fa-bookmark fa-2x text-warning"></i>
+                        </div>
+                        <h5 id="reviewCount">0</h5>
+                        <small>Ko'rib chiqish</small>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-2">
+                            <i class="fas fa-question-circle fa-2x text-danger"></i>
+                        </div>
+                        <h5 id="unansweredCount">0</h5>
+                        <small>Javobsiz</small>
+                    </div>
+                </div>
+                
+                <button class="btn btn-success btn-lg px-5" onclick="submitTest()">
+                    <i class="fas fa-paper-plane me-2"></i>
+                    Testni Yakunlash
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="submitConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark border-0">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Testni Yakunlash
+                </h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="text-warning mb-3">
+                    <i class="fas fa-exclamation-triangle fa-3x"></i>
+                </div>
+                <h5 class="text-white mb-3">Rostdan ham testni yakunlamoqchimisiz?</h5>
+                <p class="text-white-50 mb-0">
+                    Bu amal qaytarib bo'lmaydi. Barcha javoblaringiz saqlanadi va natija hisoblab chiqiladi.
+                </p>
+            </div>
+            <div class="modal-footer border-top border-secondary justify-content-center">
+                <button type="button" class="btn btn-secondary btn-lg" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Bekor qilish
+                </button>
+                <button type="button" class="btn btn-success btn-lg" onclick="confirmSubmit()">
+                    <i class="fas fa-check me-2"></i>Ha, yakunlayman
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let testData = null;
+    let currentQuestion = 0;
+    let questions = [];
+    let answers = {};
+    let timeLimit = 0;
+    let startTime = null;
+    let timerInterval = null;
+    let attemptId = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        startTest();
+    });
+
+    async function startTest() {
+        try {
+            const response = await fetch('{% url "tests:take_test" test.id %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                testData = data;
+                attemptId = data.attempt_id;
+                questions = data.questions;
+                timeLimit = data.time_limit * 60; // Convert to seconds
+                startTime = new Date(data.started_at);
+                
+                initializeTest();
+                startTimer();
+                showQuestion(0);
+            } else {
+                const error = await response.json();
+                showAlert(error.error || 'Testni boshlashda xatolik yuz berdi', 'danger');
+                setTimeout(() => {
+                    window.location.href = '{% url "tests:test_list" %}';
+                }, 2000);
+            }
+        } catch (error) {
+            showAlert('Server bilan bog\'lanishda xatolik yuz berdi', 'danger');
+            setTimeout(() => {
+                window.location.href = '{% url "tests:test_list" %}';
+            }, 2000);
+        }
+    }
+
+    function initializeTest() {
+        // Hide loading, show test
+        document.getElementById('loadingTest').classList.add('d-none');
+        document.getElementById('questionContainer').classList.remove('d-none');
+        document.getElementById('navigationPills').classList.remove('d-none');
+        
+        // Generate navigation pills
+        generateNavigationPills();
+        
+        // Initialize progress
+        updateProgress();
+        
+        // Prevent page reload
+        window.addEventListener('beforeunload', function(e) {
+            e.preventDefault();
+            e.returnValue = '';
+        });
+    }
+
+    function generateNavigationPills() {
+        const pillsContainer = document.getElementById('questionPills');
+        let html = '';
+        
+        for (let i = 0; i < questions.length; i++) {
+            html += `
+                <div class="nav-pill" id="pill-${i}" onclick="goToQuestion(${i})">
+                    ${i + 1}
+                </div>
+            `;
+        }
+        
+        pillsContainer.innerHTML = html;
+    }
+
+    function showQuestion(index) {
+        if (index < 0 || index >= questions.length) return;
+        
+        currentQuestion = index;
+        const question = questions[index];
+        
+        // Update question display
+        document.getElementById('currentQuestionNumber').textContent = index + 1;
+        document.getElementById('questionText').innerHTML = question.question_text;
+        document.getElementById('questionPoints').textContent = `${question.points} ball`;
+        
+        // Show answer options
+        const optionsContainer = document.getElementById('answerOptions');
+        let html = '';
+        
+        if (question.question_type === 'text_answer') {
+            const savedAnswer = answers[question.id]?.text_answer || '';
+            html = `
+                <div class="mb-3">
+                    <label class="form-label text-dark fw-bold">Javobingizni yozing:</label>
+                    <textarea class="form-control" rows="4" id="textAnswer" 
+                              placeholder="Javobingizni bu yerga yozing..."
+                              oninput="saveTextAnswer(${question.id})">${savedAnswer}</textarea>
+                </div>
+            `;
+        } else {
+            // Multiple choice questions
+            const savedChoices = answers[question.id]?.choice_ids || [];
+            
+            question.choices.forEach(choice => {
+                const isSelected = savedChoices.includes(choice.id);
+                const inputType = question.question_type === 'single_choice' ? 'radio' : 'checkbox';
+                
+                html += `
+                    <div class="choice-option ${isSelected ? 'selected' : ''}" 
+                         onclick="selectChoice(${question.id}, ${choice.id}, '${question.question_type}')">
+                        <div class="d-flex align-items-center">
+                            <input type="${inputType}" class="form-check-input me-3" 
+                                   id="choice-${choice.id}" ${isSelected ? 'checked' : ''}
+                                   onchange="selectChoice(${question.id}, ${choice.id}, '${question.question_type}')">
+                            <label for="choice-${choice.id}" class="form-check-label flex-grow-1 mb-0">
+                                ${choice.text}
+                            </label>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        optionsContainer.innerHTML = html;
+        
+        // Update navigation buttons
+        updateNavigationButtons();
+        
+        // Update pills
+        updateNavigationPills();
+        
+        // Update progress
+        updateProgress();
+    }
+
+    function selectChoice(questionId, choiceId, questionType) {
+        if (!answers[questionId]) {
+            answers[questionId] = { choice_ids: [] };
+        }
+        
+        if (questionType === 'single_choice') {
+            answers[questionId].choice_ids = [choiceId];
+        } else {
+            // Multiple choice
+            const index = answers[questionId].choice_ids.indexOf(choiceId);
+            if (index > -1) {
+                answers[questionId].choice_ids.splice(index, 1);
+            } else {
+                answers[questionId].choice_ids.push(choiceId);
+            }
+        }
+        
+        // Save answer
+        saveAnswer(questionId, answers[questionId]);
+        
+        // Update visual selection
+        updateChoiceSelection(questionId, questionType);
+        
+        // Update pills and progress
+        updateNavigationPills();
+        updateProgress();
+    }
+
+    function saveTextAnswer(questionId) {
+        const textAnswer = document.getElementById('textAnswer').value;
+        
+        if (!answers[questionId]) {
+            answers[questionId] = {};
+        }
+        
+        answers[questionId].text_answer = textAnswer;
+        
+        // Save answer with debounce
+        clearTimeout(saveTextAnswer.timeout);
+        saveTextAnswer.timeout = setTimeout(() => {
+            saveAnswer(questionId, answers[questionId]);
+            updateNavigationPills();
+            updateProgress();
+        }, 1000);
+    }
+
+    async function saveAnswer(questionId, answerData) {
+        try {
+            const response = await fetch(`{% url "tests:submit_answer" 0 %}`.replace('0', attemptId), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    question_id: questionId,
+                    choice_ids: answerData.choice_ids || [],
+                    text_answer: answerData.text_answer || ''
+                })
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                console.error('Save answer error:', error);
+            }
+        } catch (error) {
+            console.error('Save answer error:', error);
+        }
+    }
+
+    function updateChoiceSelection(questionId, questionType) {
+        const savedChoices = answers[questionId]?.choice_ids || [];
+        
+        document.querySelectorAll('.choice-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+        
+        savedChoices.forEach(choiceId => {
+            const choiceOption = document.querySelector(`#choice-${choiceId}`).closest('.choice-option');
+            if (choiceOption) {
+                choiceOption.classList.add('selected');
+            }
+        });
+    }
+
+    function updateNavigationButtons() {
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const submitSection = document.getElementById('submitSection');
+        
+        prevBtn.disabled = currentQuestion === 0;
+        
+        if (currentQuestion === questions.length - 1) {
+            nextBtn.style.display = 'none';
+            submitSection.classList.remove('d-none');
+        } else {
+            nextBtn.style.display = 'block';
+            submitSection.classList.add('d-none');
+        }
+    }
+
+    function updateNavigationPills() {
+        document.querySelectorAll('.nav-pill').forEach((pill, index) => {
+            pill.classList.remove('current', 'answered');
+            
+            if (index === currentQuestion) {
+                pill.classList.add('current');
+            } else if (answers[questions[index].id]) {
+                const answer = answers[questions[index].id];
+                if ((answer.choice_ids && answer.choice_ids.length > 0) || 
+                    (answer.text_answer && answer.text_answer.trim() !== '')) {
+                    pill.classList.add('answered');
+                }
+            }
+        });
+    }
+
+    function updateProgress() {
+        const totalQuestions = questions.length;
+        const answeredQuestions = Object.keys(answers).filter(qId => {
+            const answer = answers[qId];
+            return (answer.choice_ids && answer.choice_ids.length > 0) || 
+                   (answer.text_answer && answer.text_answer.trim() !== '');
+        }).length;
+        
+        const progress = (answeredQuestions / totalQuestions) * 100;
+        
+        document.getElementById('progressText').textContent = `${answeredQuestions} / ${totalQuestions}`;
+        document.getElementById('progressBar').style.width = `${progress}%`;
+        
+        // Update submit section counts
+        document.getElementById('answeredCount').textContent = answeredQuestions;
+        document.getElementById('unansweredCount').textContent = totalQuestions - answeredQuestions;
+        document.getElementById('reviewCount').textContent = '0'; // Placeholder for review functionality
+    }
+
+    function nextQuestion() {
+        if (currentQuestion < questions.length - 1) {
+            showQuestion(currentQuestion + 1);
+        }
+    }
+
+    function previousQuestion() {
+        if (currentQuestion > 0) {
+            showQuestion(currentQuestion - 1);
+        }
+    }
+
+    function goToQuestion(index) {
+        showQuestion(index);
+    }
+
+    function clearAnswer() {
+        const questionId = questions[currentQuestion].id;
+        delete answers[questionId];
+        showQuestion(currentQuestion);
+    }
+
+    function markForReview() {
+        showAlert('Belgilash funksiyasi ishlab chiqilmoqda', 'info');
+    }
+
+    function submitTest() {
+        const modal = new bootstrap.Modal(document.getElementById('submitConfirmModal'));
+        modal.show();
+    }
+
+    async function confirmSubmit() {
+        try {
+            const response = await fetch(`{% url "tests:finish_test" 0 %}`.replace('0', attemptId), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                
+                // Stop timer
+                clearInterval(timerInterval);
+                
+                // Remove beforeunload listener
+                window.removeEventListener('beforeunload', function() {});
+                
+                // Show completion message with details
+                let completionMessage = result.message;
+                if (result.results.all_answered) {
+                    completionMessage += `<br><strong>🎉 Barcha javoblar berildi!</strong><br>`;
+                } else {
+                    completionMessage += `<br><strong>ℹ️ ${result.results.answered_count}/${result.results.total_questions} ta savolga javob berildi</strong><br>`;
+                }
+                completionMessage += `<strong>Ball: ${result.results.score}/${result.results.total_points} (${result.results.percentage.toFixed(1)}%)</strong><br>`;
+                completionMessage += `<strong>Bahо: ${result.results.grade}</strong>`;
+                
+                showAlert(completionMessage, 'success');
+                
+                setTimeout(() => {
+                    window.location.href = `{% url "tests:test_results" test.id %}`;
+                }, 4000);
+                
+            } else {
+                const error = await response.json();
+                showAlert(error.error || 'Test yakunlashda xatolik yuz berdi', 'danger');
+            }
+        } catch (error) {
+            showAlert('Server bilan bog\'lanishda xatolik yuz berdi', 'danger');
+        }
+        
+        // Hide modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('submitConfirmModal'));
+        modal.hide();
+    }
+
+    function startTimer() {
+        const updateTimer = () => {
+            const now = new Date();
+            const elapsed = Math.floor((now - startTime) / 1000);
+            const remaining = Math.max(0, timeLimit - elapsed);
+            
+            const minutes = Math.floor(remaining / 60);
+            const seconds = remaining % 60;
+            
+            document.getElementById('timeRemaining').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Update timer card style based on remaining time
+            const timerCard = document.getElementById('timerCard');
+            const percentage = (remaining / timeLimit) * 100;
+            
+            timerCard.classList.remove('timer-warning', 'timer-danger');
+            
+            if (percentage <= 10) {
+                timerCard.classList.add('timer-danger');
+            } else if (percentage <= 25) {
+                timerCard.classList.add('timer-warning');
+            }
+            
+            if (remaining <= 0) {
+                clearInterval(timerInterval);
+                showAlert('Vaqt tugadi! Test avtomatik yakunlanmoqda...', 'warning');
+                setTimeout(() => {
+                    confirmSubmit();
+                }, 2000);
+            }
+        };
+        
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+    }
+</script>
+{% endblock %}

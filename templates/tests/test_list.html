@@ -1,0 +1,508 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+{% if user.role == 'student' %}Testlar{% else %}Mening Testlarim{% endif %} - Buxoro Bilimdonlar Maktabi
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="glass-card p-4 mb-4" data-aos="fade-down">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="text-white mb-1">
+                        <i class="fas fa-{% if user.role == 'student' %}tasks{% else %}file-alt{% endif %} me-2"></i>
+                        {% if user.role == 'student' %}
+                            Mavjud Testlar
+                        {% elif user.role == 'teacher' %}
+                            Mening Testlarim
+                        {% else %}
+                            Barcha Testlar
+                        {% endif %}
+                    </h2>
+                    <p class="text-white-50 mb-0">
+                        {% if user.role == 'student' %}
+                            {{ user.grade }}-sinf uchun mavjud testlarni tanlang va yeching
+                        {% elif user.role == 'teacher' %}
+                            Yaratgan testlaringizni boshqaring va natijalarni ko'ring
+                        {% else %}
+                            Barcha o'qituvchilar yaratgan testlarni ko'ring
+                        {% endif %}
+                    </p>
+                </div>
+                {% if user.role == 'teacher' %}
+                <div>
+                    <a href="{% url 'tests:create_test' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Yangi Test
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if not user.is_verified %}
+        <div class="alert alert-warning mb-4" data-aos="fade-in">
+            <div class="d-flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h5 class="alert-heading">Hisob tasdiqlanmagan</h5>
+                    <p class="mb-0">Testlarga kirish uchun admin tomonidan hisobingiz tasdiqlanishini kuting.</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Filter va Search -->
+        {% if user.role == 'student' %}
+        <div class="glass-card p-4 mb-4" data-aos="fade-right">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-secondary text-white">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control bg-transparent border-secondary text-white" 
+                               placeholder="Test qidiring..." id="searchInput">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select bg-transparent border-secondary text-white" id="subjectFilter">
+                        <option value="">Barcha fanlar</option>
+                        <option value="Matematika">Matematika</option>
+                        <option value="Fizika">Fizika</option>
+                        <option value="Kimyo">Kimyo</option>
+                        <option value="Ingliz tili">Ingliz tili</option>
+                        <option value="Adabiyot">Adabiyot</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select bg-transparent border-secondary text-white" id="statusFilter">
+                        <option value="">Barcha testlar</option>
+                        <option value="available">Mavjud testlar</option>
+                        <option value="completed">Tugallangan</option>
+                        <option value="in-progress">Jarayonda</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-light w-100" onclick="clearFilters()">
+                        <i class="fas fa-times me-2"></i>Tozalash
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Tests Grid -->
+        <div id="testsContainer">
+            <div class="row" id="testsList">
+                <!-- Tests will be loaded here via JavaScript -->
+                <div class="col-12 text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Yuklanmoqda...</span>
+                    </div>
+                    <p class="text-white mt-3">Testlar yuklanmoqda...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Card Template -->
+<template id="testCardTemplate">
+    <div class="col-lg-6 col-xl-4 test-item" data-aos="fade-up">
+        <div class="glass-card h-100 test-card">
+            <div class="card-body p-4">
+                <!-- Subject Badge -->
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="badge bg-primary subject-badge"></span>
+                    <span class="badge bg-secondary grade-badge"></span>
+                </div>
+
+                <!-- Test Title -->
+                <h5 class="card-title text-white mb-2 test-title"></h5>
+                
+                <!-- Test Description -->
+                <p class="card-text text-white-50 small test-description"></p>
+
+                <!-- Test Stats -->
+                <div class="row text-center mb-3">
+                    <div class="col-4">
+                        <div class="stat-item">
+                            <i class="fas fa-question-circle text-info mb-1"></i>
+                            <div class="small text-white questions-count">- savol</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-item">
+                            <i class="fas fa-clock text-warning mb-1"></i>
+                            <div class="small text-white time-limit">- daq</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-item">
+                            <i class="fas fa-redo text-success mb-1"></i>
+                            <div class="small text-white attempts-left">- ta</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar (if attempted) -->
+                <div class="progress mb-3 d-none test-progress">
+                    <div class="progress-bar" role="progressbar"></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2">
+                    <!-- Start Test Button -->
+                    <button class="btn btn-success start-test-btn" onclick="startTest(this)">
+                        <i class="fas fa-play me-2"></i>Testni Boshlash
+                    </button>
+                    
+                    <!-- Continue Test Button -->
+                    <button class="btn btn-warning continue-test-btn d-none" onclick="continueTest(this)">
+                        <i class="fas fa-play-circle me-2"></i>Davom Etish
+                    </button>
+                    
+                    <!-- View Results Button -->
+                    <button class="btn btn-info view-results-btn d-none" onclick="viewResults(this)">
+                        <i class="fas fa-chart-line me-2"></i>Natijani Ko'rish
+                    </button>
+                    
+                    <!-- Completed Badge -->
+                    <div class="btn btn-outline-success completed-badge d-none" disabled>
+                        <i class="fas fa-check-circle me-2"></i>Yakunlangan
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Test Info Footer -->
+            <div class="card-footer bg-transparent border-top border-secondary">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-white-50">
+                        <i class="fas fa-user me-1"></i>
+                        <span class="teacher-name">O'qituvchi</span>
+                    </small>
+                    <small class="text-white-50 created-date">Sana</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadTests();
+    
+    // Search and filter functionality
+    document.getElementById('searchInput')?.addEventListener('input', filterTests);
+    document.getElementById('subjectFilter')?.addEventListener('change', filterTests);
+    document.getElementById('statusFilter')?.addEventListener('change', filterTests);
+});
+
+async function loadTests() {
+    try {
+        const response = await fetch('/tests/', {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        const data = await response.json();
+        displayTests(data.tests || [], data.user_role || 'student');
+    } catch (error) {
+        console.error('Error loading tests:', error);
+        document.getElementById('testsList').innerHTML = `
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                <h4 class="text-white">Testlarni yuklashda xatolik</h4>
+                <p class="text-white-50">Sahifani qayta yuklang</p>
+                <button class="btn btn-primary mt-3" onclick="loadTests()">
+                    <i class="fas fa-redo me-2"></i>Qayta yuklash
+                </button>
+            </div>
+        `;
+    }
+}
+
+function displayTests(tests, userRole = 'student') {
+    const container = document.getElementById('testsList');
+    const template = document.getElementById('testCardTemplate');
+    
+    if (tests.length === 0) {
+        const message = userRole === 'teacher' 
+            ? 'Siz hali test yaratmagansiz' 
+            : 'Hozircha sizning sinfingiz uchun testlar mavjud emas';
+            
+        container.innerHTML = `
+            <div class="col-12 text-center py-5" data-aos="fade-in">
+                <i class="fas fa-clipboard-list fa-3x text-info mb-3"></i>
+                <h4 class="text-white">Testlar topilmadi</h4>
+                <p class="text-white-50">${message}</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    tests.forEach((test, index) => {
+        const clone = template.content.cloneNode(true);
+        
+        // Fill test data
+        clone.querySelector('.subject-badge').textContent = test.subject;
+        clone.querySelector('.grade-badge').textContent = test.grade + '-sinf';
+        clone.querySelector('.test-title').textContent = test.title;
+        clone.querySelector('.test-description').textContent = test.description || 'Test tavsifi mavjud emas';
+        clone.querySelector('.questions-count').textContent = test.total_questions + ' savol';
+        clone.querySelector('.time-limit').textContent = test.time_limit + ' daq';
+        clone.querySelector('.teacher-name').textContent = test.created_by || 'Noma\'lum';
+        clone.querySelector('.created-date').textContent = formatDate(test.created_at);
+        
+        // Set test ID
+        clone.querySelector('.test-card').setAttribute('data-test-id', test.id);
+        
+        // Configure based on user role
+        const startBtn = clone.querySelector('.start-test-btn');
+        const continueBtn = clone.querySelector('.continue-test-btn');
+        const resultsBtn = clone.querySelector('.view-results-btn');
+        const completedBadge = clone.querySelector('.completed-badge');
+        const progressBar = clone.querySelector('.test-progress');
+        
+        if (userRole === 'teacher') {
+            // Teacher view - show manage buttons
+            startBtn.classList.add('d-none');
+            continueBtn.classList.add('d-none');
+            completedBadge.classList.add('d-none');
+            
+            // Always show results button for teachers
+            resultsBtn.classList.remove('d-none');
+            resultsBtn.innerHTML = '<i class="fas fa-chart-line me-2"></i>Natijalarni Ko\'rish';
+            
+            // Show test stats if available
+            if (test.attempt_count > 0) {
+                progressBar.classList.remove('d-none');
+                progressBar.querySelector('.progress-bar').style.width = '100%';
+                progressBar.querySelector('.progress-bar').textContent = test.attempt_count + ' ta urinish';
+                progressBar.querySelector('.progress-bar').classList.remove('bg-success');
+                progressBar.querySelector('.progress-bar').classList.add('bg-info');
+            }
+            
+            clone.querySelector('.attempts-left').textContent = 'Boshqarish';
+
+                // Add Edit Test button
+                const editBtn = document.createElement('button');
+                editBtn.className = 'btn btn-outline-warning edit-test-btn';
+                editBtn.innerHTML = '<i class="fas fa-edit me-2"></i>Testni Tahrirlash';
+                editBtn.onclick = function() {
+                    window.location.href = `/tests/${test.id}/edit/`;
+                };
+                // Insert before results button
+                resultsBtn.parentNode.insertBefore(editBtn, resultsBtn);
+        } else {
+            // Student view - original logic
+            if (test.has_attempted) {
+                if (test.attempt_score !== null) {
+                    // Test completed
+                    startBtn.classList.add('d-none');
+                    completedBadge.classList.remove('d-none');
+                    resultsBtn.classList.remove('d-none');
+                    
+                    // Show progress
+                    progressBar.classList.remove('d-none');
+                    progressBar.querySelector('.progress-bar').style.width = test.attempt_score + '%';
+                    progressBar.querySelector('.progress-bar').textContent = test.attempt_score + '%';
+                    
+                    clone.querySelector('.attempts-left').textContent = 'Tugallangan';
+                } else {
+                    // Test in progress
+                    startBtn.classList.add('d-none');
+                    continueBtn.classList.remove('d-none');
+                    clone.querySelector('.attempts-left').textContent = 'Jarayonda';
+                }
+            } else {
+                // Test available
+                if (test.can_attempt) {
+                    clone.querySelector('.attempts-left').textContent = test.max_attempts + ' ta';
+                } else {
+                    startBtn.disabled = true;
+                    startBtn.innerHTML = '<i class="fas fa-lock me-2"></i>Mavjud emas';
+                    clone.querySelector('.attempts-left').textContent = '0 ta';
+                }
+            }
+        }
+        
+        // Add animation delay
+        clone.querySelector('.test-item').setAttribute('data-aos-delay', (index * 100).toString());
+        
+        container.appendChild(clone);
+    });
+    
+    // Reinitialize AOS for new elements
+    if (typeof AOS !== 'undefined') {
+        AOS.refresh();
+    }
+}
+
+function startTest(button) {
+    const testCard = button.closest('.test-card');
+    const testId = testCard.getAttribute('data-test-id');
+    
+    if (confirm('Testni boshlashga tayyormisiz? Vaqt hisoblash boshlanadi.')) {
+        window.location.href = `/tests/${testId}/take/`;
+    }
+}
+
+function continueTest(button) {
+    const testCard = button.closest('.test-card');
+    const testId = testCard.getAttribute('data-test-id');
+    
+    window.location.href = `/tests/${testId}/take/`;
+}
+
+function viewResults(button) {
+    const testCard = button.closest('.test-card');
+    const testId = testCard.getAttribute('data-test-id');
+    
+    window.location.href = `/tests/${testId}/results/`;
+}
+
+function filterTests() {
+    const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
+    const subjectFilter = document.getElementById('subjectFilter')?.value || '';
+    const statusFilter = document.getElementById('statusFilter')?.value || '';
+    
+    const testItems = document.querySelectorAll('.test-item');
+    
+    testItems.forEach(item => {
+        const title = item.querySelector('.test-title').textContent.toLowerCase();
+        const subject = item.querySelector('.subject-badge').textContent;
+        const isCompleted = !item.querySelector('.completed-badge').classList.contains('d-none');
+        const isInProgress = !item.querySelector('.continue-test-btn').classList.contains('d-none');
+        
+        let showItem = true;
+        
+        // Search filter
+        if (searchTerm && !title.includes(searchTerm)) {
+            showItem = false;
+        }
+        
+        // Subject filter
+        if (subjectFilter && subject !== subjectFilter) {
+            showItem = false;
+        }
+        
+        // Status filter
+        if (statusFilter) {
+            if (statusFilter === 'completed' && !isCompleted) showItem = false;
+            if (statusFilter === 'in-progress' && !isInProgress) showItem = false;
+            if (statusFilter === 'available' && (isCompleted || isInProgress)) showItem = false;
+        }
+        
+        item.style.display = showItem ? 'block' : 'none';
+    });
+}
+
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('subjectFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    filterTests();
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('uz-UZ');
+}
+</script>
+
+<style>
+.test-card {
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.test-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+.stat-item {
+    padding: 8px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.subject-badge {
+    font-size: 0.75em;
+    padding: 4px 8px;
+}
+
+.grade-badge {
+    font-size: 0.75em;
+    padding: 4px 8px;
+}
+
+.progress {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, var(--bs-success), var(--bs-info));
+    border-radius: 3px;
+    font-size: 0.7em;
+    line-height: 1;
+}
+
+/* Button animations */
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* Custom scrollbar for filters */
+.form-select::-webkit-scrollbar {
+    width: 6px;
+}
+
+.form-select::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.form-select::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.6);
+    border-radius: 3px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .test-card {
+        margin-bottom: 1rem;
+    }
+    
+    .stat-item {
+        padding: 6px;
+        margin-bottom: 0.5rem;
+    }
+}
+</style>
+
+{% endblock %}

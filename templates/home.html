@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Buxoro Bilimdonlar Maktabi - Test Platform{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- Hero Section -->
+        <div class="text-center mb-5" data-aos="fade-up">
+            <div class="glass-card p-5">
+                <h1 class="display-4 fw-bold text-white mb-4">
+                    <i class="fas fa-graduation-cap text-warning me-3"></i>
+                    Buxoro Bilimdonlar Maktabi
+                </h1>
+                <h2 class="h3 text-white-50 mb-4">Test Platformasi</h2>
+                <p class="lead text-white-50 mb-4">
+                    Zamonaviy va xavfsiz test platformasi orqali bilimingizni sinab ko'ring. 
+                    Faqat maktab o'quvchilari uchun maxsus yaratilgan tizim.
+                </p>
+                
+                {% if not user.is_authenticated %}
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-lg pulse-btn">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        Tizimga Kirish
+                    </a>
+                    <a href="{% url 'accounts:signup' %}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Ro'yxatdan O'tish
+                    </a>
+                </div>
+                {% else %}
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a href="{% url 'accounts:dashboard' %}" class="btn btn-primary btn-lg pulse-btn">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        Dashboard
+                    </a>
+                    {% if user.role == 'student' %}
+                    <a href="{% url 'tests:test_list' %}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-tasks me-2"></i>
+                        Testlarni Ko'rish
+                    </a>
+                    {% elif user.role == 'teacher' %}
+                    <a href="{% url 'tests:test_list' %}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        Test Yaratish
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="glass-card p-4 h-100 text-center">
+                    <div class="text-warning mb-3">
+                        <i class="fas fa-shield-alt fa-3x"></i>
+                    </div>
+                    <h4 class="text-white mb-3">Xavfsiz Tizim</h4>
+                    <p class="text-white-50">
+                        Faqat maktab email manzili orqali ro'yxatdan o'tish mumkin. 
+                        Admin tasdiqlashidan so'ng testlarga kirish imkoniyati.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="glass-card p-4 h-100 text-center">
+                    <div class="text-success mb-3">
+                        <i class="fas fa-clock fa-3x"></i>
+                    </div>
+                    <h4 class="text-white mb-3">Vaqt Nazorati</h4>
+                    <p class="text-white-50">
+                        Har bir test uchun vaqt limiti belgilanadi. 
+                        Avtomatik yakunlanish va natijalarni ko'rish imkoniyati.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="glass-card p-4 h-100 text-center">
+                    <div class="text-info mb-3">
+                        <i class="fas fa-chart-line fa-3x"></i>
+                    </div>
+                    <h4 class="text-white mb-3">Natijalar Tahlili</h4>
+                    <p class="text-white-50">
+                        To'liq natijalar tarixi, o'qituvchi uchun CSV/Excel 
+                        eksport va batafsil tahlil imkoniyati.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Roles Section -->
+        <div class="row g-4 mb-5">
+            <div class="col-12" data-aos="fade-up">
+                <div class="glass-card p-5">
+                    <h3 class="text-white text-center mb-4">
+                        <i class="fas fa-users me-2"></i>
+                        Foydalanuvchi Rollari
+                    </h3>
+                    
+                    <div class="row g-4">
+                        <div class="col-lg-4">
+                            <div class="text-center">
+                                <div class="text-primary mb-3">
+                                    <i class="fas fa-user-graduate fa-2x"></i>
+                                </div>
+                                <h5 class="text-white">O'quvchi (Student)</h5>
+                                <ul class="list-unstyled text-white-50 text-start">
+                                    <li><i class="fas fa-check text-success me-2"></i>Testlarni yechish</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Natijalarni ko'rish</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Tarix va statistika</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Profil boshqaruvi</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4">
+                            <div class="text-center">
+                                <div class="text-warning mb-3">
+                                    <i class="fas fa-chalkboard-teacher fa-2x"></i>
+                                </div>
+                                <h5 class="text-white">O'qituvchi (Teacher)</h5>
+                                <ul class="list-unstyled text-white-50 text-start">
+                                    <li><i class="fas fa-check text-success me-2"></i>Test yaratish</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Savollar yuklash</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Natijalarni ko'rish</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Excel eksport</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4">
+                            <div class="text-center">
+                                <div class="text-danger mb-3">
+                                    <i class="fas fa-user-shield fa-2x"></i>
+                                </div>
+                                <h5 class="text-white">Administrator</h5>
+                                <ul class="list-unstyled text-white-50 text-start">
+                                    <li><i class="fas fa-check text-success me-2"></i>Foydalanuvchilarni tasdiqlash</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Barcha natijalarni ko'rish</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Tizim boshqaruvi</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Hisobotlar</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if user.is_authenticated %}
+        <!-- Quick Stats for authenticated users -->
+        <div class="row g-4">
+            <div class="col-12" data-aos="fade-up">
+                <div class="glass-card p-4">
+                    <h4 class="text-white text-center mb-4">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        Tezkor Ma'lumot
+                    </h4>
+                    
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="text-primary">
+                                <i class="fas fa-user fa-2x"></i>
+                            </div>
+                            <h5 class="text-white mt-2">{{ user.get_full_name|default:user.username }}</h5>
+                            <p class="text-white-50">{{ user.get_role_display }}</p>
+                        </div>
+                        
+                        {% if user.role == 'student' %}
+                        <div class="col-md-3">
+                            <div class="text-warning">
+                                <i class="fas fa-tasks fa-2x"></i>
+                            </div>
+                            <h5 class="text-white mt-2">Sinf: {{ user.grade|default:'--' }}</h5>
+                            <p class="text-white-50">{{ user.class_name|default:'Belgilanmagan' }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-success">
+                                <i class="fas fa-id-card fa-2x"></i>
+                            </div>
+                            <h5 class="text-white mt-2">ID: {{ user.student_id|default:'--' }}</h5>
+                            <p class="text-white-50">O'quvchi ID</p>
+                        </div>
+                        {% elif user.role == 'teacher' %}
+                        <div class="col-md-3">
+                            <div class="text-warning">
+                                <i class="fas fa-book fa-2x"></i>
+                            </div>
+                            <h5 class="text-white mt-2">{{ user.subject|default:'--' }}</h5>
+                            <p class="text-white-50">Fan</p>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="col-md-3">
+                            <div class="text-info">
+                                <i class="fas fa-{% if user.is_verified %}check-circle{% else %}clock{% endif %} fa-2x"></i>
+                            </div>
+                            <h5 class="text-white mt-2">
+                                {% if user.is_verified %}
+                                    Tasdiqlangan
+                                {% else %}
+                                    Kutilmoqda
+                                {% endif %}
+                            </h5>
+                            <p class="text-white-50">Holat</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add floating particles animation
+    function createParticle() {
+        const particle = document.createElement('div');
+        particle.style.cssText = `
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+            animation: float-particle 6s linear infinite;
+            left: ${Math.random() * 100}vw;
+            top: 100vh;
+        `;
+        
+        document.body.appendChild(particle);
+        
+        setTimeout(() => {
+            particle.remove();
+        }, 6000);
+    }
+
+    // Create particles periodically
+    setInterval(createParticle, 300);
+
+    // Add CSS for particle animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes float-particle {
+            to {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+</script>
+{% endblock %}

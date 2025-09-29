@@ -1,0 +1,634 @@
+{% extends 'base.html' %}
+
+{% block title %}Barcha Test Natijalari - Buxoro Bilimdonlar Maktabi{% endblock %}
+
+{% block extra_css %}
+<style>
+    .results-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .page-header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-header h1 {
+        color: #2c3e50;
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    .filters-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .filter-controls {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        min-width: 150px;
+    }
+
+    .filter-group label {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.9rem;
+    }
+
+    .filter-group select, .filter-group input {
+        padding: 8px 12px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        background: white;
+        font-size: 0.9rem;
+    }
+
+    .filter-group select:focus, .filter-group input:focus {
+        border-color: #3498db;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+
+    .stats-overview {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    .stat-card .number {
+        font-size: 2rem;
+        font-weight: 700;
+        display: block;
+    }
+
+    .stat-card .label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .results-table-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow-x: auto;
+    }
+
+    .results-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .results-table th,
+    .results-table td {
+        padding: 12px 8px;
+        text-align: left;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .results-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #2c3e50;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .results-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .grade-badge {
+        padding: 4px 8px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .grade-badge.excellent {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .grade-badge.good {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .grade-badge.satisfactory {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .grade-badge.poor {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .student-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .student-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+
+    .student-details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .student-name {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .student-class {
+        font-size: 0.8rem;
+        color: #7f8c8d;
+    }
+
+    .test-info {
+        font-size: 0.9rem;
+    }
+
+    .test-title {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .test-subject {
+        color: #7f8c8d;
+        font-size: 0.8rem;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 60px 20px;
+        color: #7f8c8d;
+    }
+
+    .loading i {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        animation: spin 1s linear infinite;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 60px 20px;
+        color: #7f8c8d;
+    }
+
+    .no-results i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+
+    .export-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .export-btn {
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .export-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+    }
+
+    @media (max-width: 768px) {
+        .filter-controls {
+            flex-direction: column;
+        }
+
+        .filter-group {
+            min-width: 100%;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 8px 4px;
+            font-size: 0.8rem;
+        }
+
+        .student-info {
+            flex-direction: column;
+            gap: 5px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="results-container">
+    <!-- Page Header -->
+    <div class="page-header" data-aos="fade-up">
+        <h1>
+            <i class="fas fa-chart-bar me-2"></i>
+            {% if user.role == 'admin' %}
+                Barcha Test Natijalari
+            {% else %}
+                Mening Test Natijalarim
+            {% endif %}
+        </h1>
+        <p class="lead">
+            {% if user.role == 'admin' %}
+                Barcha o'qituvchilar va o'quvchilarning test natijalari
+            {% else %}
+                Sizning yaratgan testlaringiz bo'yicha o'quvchilar natijalari
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-section" data-aos="fade-up" data-aos-delay="100">
+        <div class="filter-controls">
+            <div class="filter-group">
+                <label for="gradeFilter">Sinf</label>
+                <select id="gradeFilter">
+                    <option value="">Barcha sinflar</option>
+                    <option value="5">5-sinf</option>
+                    <option value="6">6-sinf</option>
+                    <option value="7">7-sinf</option>
+                    <option value="8">8-sinf</option>
+                    <option value="9">9-sinf</option>
+                    <option value="10">10-sinf</option>
+                    <option value="11">11-sinf</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="subjectFilter">Fan</label>
+                <select id="subjectFilter">
+                    <option value="">Barcha fanlar</option>
+                    <option value="Matematika">Matematika</option>
+                    <option value="Fizika">Fizika</option>
+                    <option value="Kimyo">Kimyo</option>
+                    <option value="Biologiya">Biologiya</option>
+                    <option value="Ingliz tili">Ingliz tili</option>
+                    <option value="Adabiyot">Adabiyot</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="gradeResultFilter">Baho</label>
+                <select id="gradeResultFilter">
+                    <option value="">Barcha baholar</option>
+                    <option value="A'lo">A'lo</option>
+                    <option value="Yaxshi">Yaxshi</option>
+                    <option value="Qoniqarli">Qoniqarli</option>
+                    <option value="Qoniqarsiz">Qoniqarsiz</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="searchFilter">Qidiruv</label>
+                <input type="text" id="searchFilter" placeholder="Ism yoki test nomi...">
+            </div>
+
+            <div class="filter-group">
+                <label>&nbsp;</label>
+                <button class="btn btn-primary" onclick="applyFilters()">
+                    <i class="fas fa-filter me-2"></i>Filterlash
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-overview" id="statsSection" style="display: none;" data-aos="fade-up" data-aos-delay="200">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="number" id="totalResults">0</span>
+                <span class="label">Jami natijalar</span>
+            </div>
+            <div class="stat-card">
+                <span class="number" id="avgScore">0%</span>
+                <span class="label">O'rtacha ball</span>
+            </div>
+            <div class="stat-card">
+                <span class="number" id="totalStudents">0</span>
+                <span class="label">O'quvchilar soni</span>
+            </div>
+            <div class="stat-card">
+                <span class="number" id="totalTests">0</span>
+                <span class="label">Testlar soni</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading" id="loadingSection">
+        <i class="fas fa-spinner"></i>
+        <h3>Natijalar yuklanmoqda...</h3>
+        <p>Iltimos kuting...</p>
+    </div>
+
+    <!-- Results Table -->
+    <div class="results-table-container" id="resultsSection" style="display: none;" data-aos="fade-up" data-aos-delay="300">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4><i class="fas fa-list me-2"></i>Test Natijalari</h4>
+            <div class="export-actions">
+                <button class="export-btn" onclick="exportResults()">
+                    <i class="fas fa-download me-2"></i>Excel
+                </button>
+            </div>
+        </div>
+        
+        <table class="results-table" id="resultsTable">
+            <thead>
+                <tr>
+                    <th>O'quvchi</th>
+                    <th>Test</th>
+                    <th>Ball</th>
+                    <th>Foiz</th>
+                    <th>Baho</th>
+                    <th>Vaqt</th>
+                    <th>Sana</th>
+                    <th>Batafsil</th>
+                </tr>
+            </thead>
+            <tbody id="resultsBody">
+                <!-- Results will be loaded here -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- No Results -->
+    <div class="no-results" id="noResultsSection" style="display: none;">
+        <i class="fas fa-clipboard-list"></i>
+        <h3>Natijalar topilmadi</h3>
+        <p>Hali hech qanday test natijasi mavjud emas.</p>
+    </div>
+</div>
+
+<script>
+let allResults = [];
+let filteredResults = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadAllResults();
+});
+
+async function loadAllResults() {
+    try {
+        const response = await fetch('/tests/all-results/', {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            allResults = data.results;
+            filteredResults = [...allResults];
+            
+            document.getElementById('loadingSection').style.display = 'none';
+            
+            if (allResults.length > 0) {
+                displayResults();
+                showStatistics();
+                document.getElementById('statsSection').style.display = 'block';
+                document.getElementById('resultsSection').style.display = 'block';
+            } else {
+                document.getElementById('noResultsSection').style.display = 'block';
+            }
+        } else {
+            throw new Error('Natijalarni yuklashda xatolik');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('loadingSection').style.display = 'none';
+        document.getElementById('noResultsSection').style.display = 'block';
+    }
+}
+
+function displayResults() {
+    const tbody = document.getElementById('resultsBody');
+    tbody.innerHTML = '';
+    
+    filteredResults.forEach((result, index) => {
+        const row = createResultRow(result);
+        row.setAttribute('data-aos', 'fade-up');
+        row.setAttribute('data-aos-delay', (index * 50).toString());
+        tbody.appendChild(row);
+    });
+    
+    // Reinitialize AOS
+    if (typeof AOS !== 'undefined') {
+        AOS.refresh();
+    }
+}
+
+function createResultRow(result) {
+    const row = document.createElement('tr');
+    
+    const studentName = `${result.student.first_name} ${result.student.last_name}`;
+    const studentInitials = studentName.split(' ').map(n => n.charAt(0).toUpperCase()).join('');
+    const finishedDate = new Date(result.finished_at).toLocaleDateString('uz-UZ');
+    const gradeClass = getGradeClass(result.percentage);
+    
+    row.innerHTML = `
+        <td>
+            <div class="student-info">
+                <div class="student-avatar">${studentInitials}</div>
+                <div class="student-details">
+                    <div class="student-name">${studentName}</div>
+                    <div class="student-class">
+                        ${result.student.grade || ''}-sinf • ${result.student.class_name || ''} • ${result.student.username}
+                    </div>
+                </div>
+            </div>
+        </td>
+        <td>
+            <div class="test-info">
+                <div class="test-title">${result.test.title}</div>
+                <div class="test-subject">${result.test.subject} • ${result.test.created_by}</div>
+            </div>
+        </td>
+        <td><strong>${result.score}/${result.total_points}</strong></td>
+        <td><strong>${result.percentage.toFixed(1)}%</strong></td>
+        <td>
+            <span class="grade-badge ${gradeClass}">${result.grade}</span>
+        </td>
+        <td>${result.time_taken}</td>
+        <td>${finishedDate}</td>
+        <td>
+            <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(${result.test.id})">
+                <i class="fas fa-eye"></i>
+            </button>
+        </td>
+    `;
+    
+    return row;
+}
+
+function getGradeClass(percentage) {
+    if (percentage >= 81) return 'excellent';
+    if (percentage >= 61) return 'good';
+    if (percentage >= 31) return 'satisfactory';
+    return 'poor';
+}
+
+function showStatistics() {
+    const totalResults = filteredResults.length;
+    const totalScore = filteredResults.reduce((sum, r) => sum + r.percentage, 0);
+    const avgScore = totalResults > 0 ? (totalScore / totalResults).toFixed(1) : 0;
+    
+    const uniqueStudents = new Set(filteredResults.map(r => r.student.id)).size;
+    const uniqueTests = new Set(filteredResults.map(r => r.test.id)).size;
+    
+    document.getElementById('totalResults').textContent = totalResults;
+    document.getElementById('avgScore').textContent = avgScore + '%';
+    document.getElementById('totalStudents').textContent = uniqueStudents;
+    document.getElementById('totalTests').textContent = uniqueTests;
+}
+
+function applyFilters() {
+    const gradeFilter = document.getElementById('gradeFilter').value;
+    const subjectFilter = document.getElementById('subjectFilter').value;
+    const gradeResultFilter = document.getElementById('gradeResultFilter').value;
+    const searchFilter = document.getElementById('searchFilter').value.toLowerCase();
+    
+    filteredResults = allResults.filter(result => {
+        const matchesGrade = !gradeFilter || result.student.grade == gradeFilter;
+        const matchesSubject = !subjectFilter || result.test.subject === subjectFilter;
+        const matchesGradeResult = !gradeResultFilter || result.grade === gradeResultFilter;
+        const matchesSearch = !searchFilter || 
+            result.student.first_name.toLowerCase().includes(searchFilter) ||
+            result.student.last_name.toLowerCase().includes(searchFilter) ||
+            result.test.title.toLowerCase().includes(searchFilter);
+        
+        return matchesGrade && matchesSubject && matchesGradeResult && matchesSearch;
+    });
+    
+    displayResults();
+    showStatistics();
+    
+    if (filteredResults.length === 0) {
+        document.getElementById('resultsSection').style.display = 'none';
+        document.getElementById('noResultsSection').style.display = 'block';
+    } else {
+        document.getElementById('resultsSection').style.display = 'block';
+        document.getElementById('noResultsSection').style.display = 'none';
+    }
+}
+
+function exportResults() {
+    // Create CSV content
+    let csvContent = "O'quvchi,Test,Fan,Ball,Umumiy Ball,Foiz,Baho,To'g'ri,Noto'g'ri,Javobsiz,Vaqt,Sana\n";
+    
+    filteredResults.forEach(result => {
+        const studentName = `${result.student.first_name} ${result.student.last_name}`;
+        const finishedDate = new Date(result.finished_at).toLocaleDateString('uz-UZ');
+        
+        csvContent += [
+            `"${studentName}"`,
+            `"${result.test.title}"`,
+            `"${result.test.subject}"`,
+            result.score,
+            result.total_points,
+            result.percentage.toFixed(1),
+            `"${result.grade}"`,
+            result.correct_answers,
+            result.incorrect_answers,
+            result.unanswered,
+            `"${result.time_taken}"`,
+            `"${finishedDate}"`
+        ].join(',') + '\n';
+    });
+    
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'barcha_test_natijalari.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+function viewDetails(testId) {
+    window.open(`/tests/${testId}/results/`, '_blank');
+}
+
+// Filter event listeners
+document.getElementById('gradeFilter').addEventListener('change', applyFilters);
+document.getElementById('subjectFilter').addEventListener('change', applyFilters);
+document.getElementById('gradeResultFilter').addEventListener('change', applyFilters);
+document.getElementById('searchFilter').addEventListener('input', applyFilters);
+</script>
+{% endblock %}

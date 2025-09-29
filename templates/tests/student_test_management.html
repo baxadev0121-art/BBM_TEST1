@@ -1,0 +1,385 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}O'quvchilar Test Boshqaruvi - Buxoro Bilimdonlar Maktabi{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="glass-card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="h3 text-primary mb-1">
+                            <i class="fas fa-users-cog me-2"></i>
+                            O'quvchilar Test Boshqaruvi
+                        </h2>
+                        <p class="text-muted mb-0">O'quvchilarning test holatlarini boshqarish va testlarni qayta ochish</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-outline-primary" onclick="location.reload()">
+                            <i class="fas fa-sync-alt me-1"></i>
+                            Yangilash
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter -->
+            <div class="glass-card p-3 mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <label class="form-label">O'quvchini qidirish:</label>
+                        <input type="text" id="studentSearch" class="form-control" placeholder="Ism, familiya yoki sinf...">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Test bo'yicha filter:</label>
+                        <select id="testFilter" class="form-select">
+                            <option value="">Barcha testlar</option>
+                            {% for test in all_tests %}
+                            <option value="{{ test.id }}">{{ test.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Holat bo'yicha filter:</label>
+                        <select id="statusFilter" class="form-select">
+                            <option value="">Barchasi</option>
+                            <option value="no_attempts">Hech qanday urinish yo'q</option>
+                            <option value="has_attempts">Urinishlar mavjud</option>
+                            <option value="pending_retake">Qayta ishlash kutilmoqda</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Test Data -->
+            <div class="row" id="studentTestData">
+                {% for data in student_test_data %}
+                <div class="col-12 mb-4 student-card" 
+                     data-student-name="{{ data.student.get_full_name|lower }}"
+                     data-student-class="{{ data.student.class_name|lower }}">
+                    
+                    <div class="glass-card p-4">
+                        <!-- Student Info -->
+                        <div class="row align-items-center mb-3">
+                            <div class="col-md-8">
+                                <h5 class="text-primary mb-1">
+                                    <i class="fas fa-user me-2"></i>
+                                    {{ data.student.get_full_name }}
+                                </h5>
+                                <div class="text-muted">
+                                    <small>
+                                        <i class="fas fa-school me-1"></i>{{ data.student.class_name }} sinf
+                                        <i class="fas fa-envelope ms-3 me-1"></i>{{ data.student.email }}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <span class="badge bg-info">
+                                    {{ data.tests|length }} ta test
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Tests Table -->
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Test nomi</th>
+                                        <th>Fan</th>
+                                        <th>Sinf</th>
+                                        <th>Urinishlar</th>
+                                        <th>So'nggi natija</th>
+                                        <th>Qayta ishlash</th>
+                                        <th>Harakatlar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for test_info in data.tests %}
+                                    <tr class="test-row" data-test-id="{{ test_info.test.id }}">
+                                        <td>
+                                            <strong>{{ test_info.test.title }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ test_info.test.description|truncatechars:50 }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ test_info.test.subject }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ test_info.test.grade }}-sinf</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge {% if test_info.attempts_count > 0 %}bg-success{% else %}bg-light text-dark{% endif %}">
+                                                {{ test_info.attempts_count }} ta urinish
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if test_info.latest_attempt %}
+                                                {% if test_info.latest_attempt.status == 'completed' %}
+                                                    <div class="text-success">
+                                                        <i class="fas fa-check-circle me-1"></i>
+                                                        Yakunlangan
+                                                    </div>
+                                                    {% if test_info.latest_attempt.testresult %}
+                                                    <small class="text-muted">
+                                                        Ball: {{ test_info.latest_attempt.testresult.score }}
+                                                        ({{ test_info.latest_attempt.testresult.grade }})
+                                                    </small>
+                                                    {% endif %}
+                                                {% elif test_info.latest_attempt.status == 'in_progress' %}
+                                                    <div class="text-warning">
+                                                        <i class="fas fa-clock me-1"></i>
+                                                        Davom etmoqda
+                                                    </div>
+                                                {% endif %}
+                                            {% else %}
+                                                <div class="text-muted">
+                                                    <i class="fas fa-minus-circle me-1"></i>
+                                                    Urinish yo'q
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if test_info.retake_requests %}
+                                                {% for request in test_info.retake_requests %}
+                                                    {% if request.status == 'pending' %}
+                                                        <span class="badge bg-warning">Kutilmoqda</span>
+                                                    {% elif request.status == 'approved' %}
+                                                        <span class="badge bg-success">Tasdiqlangan</span>
+                                                    {% elif request.status == 'rejected' %}
+                                                        <span class="badge bg-danger">Rad etilgan</span>
+                                                    {% endif %}
+                                                    {% if not forloop.last %}<br>{% endif %}
+                                                {% endfor %}
+                                            {% else %}
+                                                <span class="text-muted">So'rov yo'q</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if test_info.can_retake %}
+                                                <button class="btn btn-success btn-sm open-test-btn"
+                                                        data-test-id="{{ test_info.test.id }}"
+                                                        data-student-id="{{ data.student.id }}"
+                                                        data-student-name="{{ data.student.get_full_name }}"
+                                                        data-test-title="{{ test_info.test.title }}"
+                                                        title="Testni qayta ochish">
+                                                    <i class="fas fa-unlock me-1"></i>
+                                                    Qayta ochish
+                                                </button>
+                                            {% else %}
+                                                <button class="btn btn-outline-success btn-sm open-test-btn"
+                                                        data-test-id="{{ test_info.test.id }}"
+                                                        data-student-id="{{ data.student.id }}"
+                                                        data-student-name="{{ data.student.get_full_name }}"
+                                                        data-test-title="{{ test_info.test.title }}"
+                                                        title="Birinchi marta ochish">
+                                                    <i class="fas fa-play me-1"></i>
+                                                    Ochish
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">
+                                            Testlar mavjud emas
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="glass-card p-5 text-center">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Tasdiqlangan o'quvchilar topilmadi</h5>
+                        <p class="text-muted">Hozircha hech qanday o'quvchi ro'yxatdan o'tmagan yoki tasdiqlanmagan.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Testni ochishni tasdiqlang</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Quyidagi testni o'quvchi uchun ochishni tasdiqlaysizmi?</p>
+                <div class="alert alert-info">
+                    <strong>O'quvchi:</strong> <span id="modalStudentName"></span><br>
+                    <strong>Test:</strong> <span id="modalTestTitle"></span>
+                </div>
+                <p class="text-warning">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    Bu harakat bekor qilib bo'lmaydi!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Bekor qilish
+                </button>
+                <button type="button" class="btn btn-success" id="confirmOpenTest">
+                    <i class="fas fa-unlock me-1"></i>
+                    Ha, ochish
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filter functionality
+    const studentSearch = document.getElementById('studentSearch');
+    const testFilter = document.getElementById('testFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    
+    function filterData() {
+        const searchTerm = studentSearch.value.toLowerCase();
+        const selectedTest = testFilter.value;
+        const selectedStatus = statusFilter.value;
+        
+        document.querySelectorAll('.student-card').forEach(card => {
+            const studentName = card.dataset.studentName;
+            const studentClass = card.dataset.studentClass;
+            let shouldShow = true;
+            
+            // Student name/class filter
+            if (searchTerm && !studentName.includes(searchTerm) && !studentClass.includes(searchTerm)) {
+                shouldShow = false;
+            }
+            
+            // Test filter (show card if any test matches)
+            if (selectedTest && shouldShow) {
+                const hasMatchingTest = card.querySelector(`[data-test-id="${selectedTest}"]`);
+                shouldShow = !!hasMatchingTest;
+            }
+            
+            card.style.display = shouldShow ? 'block' : 'none';
+        });
+    }
+    
+    studentSearch.addEventListener('input', filterData);
+    testFilter.addEventListener('change', filterData);
+    statusFilter.addEventListener('change', filterData);
+    
+    // Open test functionality
+    let currentTestId, currentStudentId;
+    
+    document.querySelectorAll('.open-test-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            currentTestId = this.dataset.testId;
+            currentStudentId = this.dataset.studentId;
+            
+            document.getElementById('modalStudentName').textContent = this.dataset.studentName;
+            document.getElementById('modalTestTitle').textContent = this.dataset.testTitle;
+            
+            new bootstrap.Modal(document.getElementById('confirmModal')).show();
+        });
+    });
+    
+    document.getElementById('confirmOpenTest').addEventListener('click', function() {
+        if (!currentTestId || !currentStudentId) return;
+        
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Ochilmoqda...';
+        
+        fetch(`/tests/${currentTestId}/open-for-student/${currentStudentId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                // Success
+                showAlert('success', data.message);
+                setTimeout(() => location.reload(), 2000);
+            } else if (data.error) {
+                showAlert('error', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('error', 'Xatolik yuz berdi');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-unlock me-1"></i>Ha, ochish';
+            bootstrap.Modal.getInstance(document.getElementById('confirmModal')).hide();
+        });
+    });
+    
+    function showAlert(type, message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+        alertDiv.style.top = '20px';
+        alertDiv.style.right = '20px';
+        alertDiv.style.zIndex = '9999';
+        
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+});
+</script>
+
+<style>
+.glass-card {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.table th {
+    border-top: none;
+    background: rgba(0, 123, 255, 0.1);
+    color: #0d6efd;
+    font-weight: 600;
+}
+
+.student-card {
+    transition: all 0.3s ease;
+}
+
+.student-card:hover {
+    transform: translateY(-2px);
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.btn-sm {
+    font-size: 0.8em;
+}
+</style>
+
+{% csrf_token %}
+{% endblock %}
